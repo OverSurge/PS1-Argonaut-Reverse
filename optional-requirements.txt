@@ -1,0 +1,4 @@
+numpy==1.18.4
+Pillow==7.1.2
+pycollada==0.7.1
+pyquaternion==0.9.5
