@@ -32,7 +32,9 @@ class TextureFile:
             else:
                 raise TexturesWarning(start, self.n_textures, self.n_rows)
 
-        for texture_id in range(self.n_textures):
+        # In Harry Potter, the last 16 textures are empty (full of 00 bytes)
+        for texture_id in range(
+                self.n_textures - 16 if conf.game in (HARRY_POTTER_1_PS1, HARRY_POTTER_2_PS1) else self.n_textures):
             tex_start = start + texture_id * texture_size
             self.textures.append(TextureData(data, tex_start, conf))
         start += self.n_textures * texture_size
@@ -62,6 +64,7 @@ class TextureFile:
         self.image_size = 1024
 
     def generate_texture(self, texture: Union[int, TextureData], debug=False):
+        """Draws a single colored texture."""
         from PIL import Image
 
         if isinstance(texture, int):
@@ -71,7 +74,7 @@ class TextureFile:
 
         if debug:
             debug_print = f"w:{texture.width}|h:{texture.height}|box:{texture.box}|row:{texture.n_row}|" \
-                          f"col:{texture.n_column}|coords:{texture.coordinates}|"
+                          f"col:{texture.n_column}|coords:{texture.coords}|"
             if texture.paletted:
                 if texture.palette_256_colors:
                     debug_print += f"palette256:{texture.palette_start}"
@@ -81,24 +84,19 @@ class TextureFile:
                 debug_print += "nopalette"
             print(debug_print)
 
-        if texture.width < 0 or texture.height < 0:
-            # TODO: Mirrored (reversed) textures
-            return
-
         palette = None
         res: Image.Image = Image.new('RGBA', (texture.width, texture.height), 'green' if debug else None)
         if texture.paletted:
             palette = self.get_palette(texture)
 
         start = (self.image_size * texture.box[1] + texture.box[0]) // 2
-        # TODO: Non-rectangular textures
         for row_id in range(texture.height):
             if texture.paletted:
-                if texture.palette_256_colors:
+                if texture.palette_256_colors:  # 256-colors paletted
                     for column_id in range(texture.width):
                         pos = start + (column_id + self.image_size // 2 * row_id)
                         res.putpixel((column_id, row_id), palette[self.raw_texture[pos]])
-                else:
+                else:  # 16-colors paletted
                     for column_id in range(0, texture.width, 2):
                         pos = start + (column_id + self.image_size * row_id) // 2
                         pixel1 = self.raw_texture[pos] & 15
@@ -106,7 +104,7 @@ class TextureFile:
                         res.putpixel((column_id, row_id), palette[pixel1])
                         if column_id + 1 < texture.width:
                             res.putpixel((column_id + 1, row_id), palette[pixel2])
-            else:
+            else:  # True color (no palette)
                 pos = start + (self.image_size // 2 * row_id)
                 pixels = TextureFile.raw_as_true_color(self.raw_texture, pos, pos + texture.width * 2)
                 for i in range(len(pixels)):
@@ -115,30 +113,50 @@ class TextureFile:
 
     # TODO: Remove textures parameter (used for debug)
     def generate_colorized_texture(self, debug=False, textures=None):
+        """Draws a complete colored texture image (composed of multiple single textures)."""
         from PIL import Image
         if textures is None:
             textures = self.textures
-        """Draws a complete colored texture image. Meant for visual indication, not reliable.
-        (multiple textures (with multiple palettes) may overlap)"""
-        if debug:
-            res: Image.Image = Image.new('RGBA', (self.image_size, self.image_size), 'green')
-        else:
-            res: Image.Image = Image.new('RGBA', (self.image_size, self.n_rows * 256), None)
-        if self.game in (HARRY_POTTER_1_PS1, HARRY_POTTER_2_PS1):
-            textures = textures[:-16]
-        elif self.game in (CROC_2_PS1, CROC_2_DEMO_PS1, CROC_2_DEMO_PS1_DUMMY):
-            pass
-        else:
-            raise NotImplementedError
+        res: Image.Image = Image.new('RGBA', (self.image_size, self.image_size), 'green' if debug else None)
         for texture in textures:
             texture_image = self.generate_texture(texture, debug)
             if texture_image:
                 res.paste(texture_image, texture.box)
         return res
 
+    def get_palette(self, texture: TextureData) -> Tuple[Tuple[int, int, int, int], ...]:
+        """Returns palettes colors in tuples of 3 RGB colors given the palette start and type (16 or 256 colors)."""
+        if texture.palette_256_colors:  # 256-colors palettes ignore the transparency bit (always unset)
+            return TextureFile.raw_as_true_color(self.raw_texture, texture.palette_start, texture.palette_start + 512,
+                                                 True)
+        else:
+            return TextureFile.raw_as_true_color(self.raw_texture, texture.palette_start, texture.palette_start + 32)
+
+    def __getitem__(self, item):
+        return self.textures[item]
+
+    @staticmethod
+    def raw_as_true_color(data: bytes, start: int, end: int, ignore_transparency_bit=False) -> \
+            Tuple[Tuple[int, int, int, int], ...]:
+        """Converts 15-bit high color raw bytes (see doc @Textures.md#15-bit-high-color)
+        into tuples containing separate RGB components."""
+        res = []
+        for i in range(start, end, 2):
+            color_bytes = int.from_bytes(data[i:i + 2], 'little')
+            color = (((color_bytes & 31) * 527 + 23) >> 6,
+                     (((color_bytes & 992) >> 5) * 527 + 23) >> 6,
+                     (((color_bytes & 31744) >> 10) * 527 + 23) >> 6)
+            if color_bytes == 0 and ignore_transparency_bit is False:
+                transparency = 0
+            else:
+                transparency = 255
+            res.append(color + (transparency,))
+        return tuple(res)
+
+    # Debug functions
+
     def generate_greyscale_texture(self):
-        """Draws the complete texture image in greyscale (Palette indexes are converted into a color value).
-        Meant for visual indication, not reliable."""
+        """Debug use, do not use for textures extraction ! Draws the complete texture image in greyscale."""
         from PIL import Image
         res: Image.Image = Image.new('L', (self.image_size, self.image_size))
         for i in range(len(self.raw_texture)):
@@ -152,38 +170,10 @@ class TextureFile:
         return res
 
     def generate_true_color_texture(self):
-        """"""
+        """Debug use, do not use for textures extraction ! Draws the complete texture image in greyscale."""
         from PIL import Image
         res: Image.Image = Image.new('RGBA', (self.image_size // 4, self.image_size))
         res.putdata(TextureFile.raw_as_true_color(self.raw_texture, 0, len(self.raw_texture)))
-        return res
-
-    def get_palette(self, texture: TextureData) -> List[Tuple[int, int, int, int]]:
-        if texture.palette_256_colors:
-            return TextureFile.raw_as_true_color(self.raw_texture, texture.palette_start, texture.palette_start + 512,
-                                                 True)
-        else:
-            return TextureFile.raw_as_true_color(self.raw_texture, texture.palette_start, texture.palette_start + 32)
-
-    def __getitem__(self, item):
-        return self.textures[item]
-
-    @staticmethod
-    def raw_as_true_color(data: bytes, start: int, end: int, ignore_transparency_bit=False) -> \
-            List[Tuple[int, int, int, int]]:
-        """Converts 15-bit high color (|GGGRRRRR|TBBBBBGG|, see doc @Textures.md#15-bit-high-color)
-        into a list of tuples containing separate RGB components"""
-        res = []
-        for i in range(start, end, 2):
-            color_bytes = int.from_bytes(data[i:i + 2], 'little')
-            color = (((color_bytes & 31) * 527 + 23) >> 6,
-                     (((color_bytes & 992) >> 5) * 527 + 23) >> 6,
-                     (((color_bytes & 31744) >> 10) * 527 + 23) >> 6)
-            if color_bytes == 0 and ignore_transparency_bit is False:
-                transparency = 0
-            else:
-                transparency = 255
-            res.append(color + (transparency,))
         return res
 
 

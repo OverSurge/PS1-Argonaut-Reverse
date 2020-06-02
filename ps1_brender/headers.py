@@ -21,7 +21,7 @@ class ModelHeader:
         elif conf.game in (HARRY_POTTER_1_PS1, HARRY_POTTER_2_PS1):
             self.total_header_size: int = 104
         else:
-            raise NotImplementedError
+            raise NotImplementedError(UNSUPPORTED_GAME)
         self.n_extended_data_frames = int.from_bytes(data[start + 92:start + 94], 'little') + int.from_bytes(
             data[start + 94:start + 96], 'little') + int.from_bytes(data[start + 96:start + 98], 'little')
 
@@ -39,20 +39,20 @@ class AnimationHeader:
         self.has_additional_data: bool = has_additional_frame_data_value == 0
         self.n_interframe = 0
 
-        if conf.game in (HARRY_POTTER_1_PS1, HARRY_POTTER_2_PS1):
-            self.n_stored_frames = int.from_bytes(data[start + 32: start + 36], 'little')
-            base_header_size = 48
-            flags_size = 4
-            additional_frame_data_size = 8
-        elif conf.game in (CROC_2_PS1, CROC_2_DEMO_PS1, CROC_2_DEMO_PS1_DUMMY,):
+        if conf.game in (CROC_2_PS1, CROC_2_DEMO_PS1, CROC_2_DEMO_PS1_DUMMY):
             base_header_size = 32
             flags_size = 4
             additional_frame_data_size = 8
             self.n_interframe = int.from_bytes(data[start + 16: start + 20], 'little')
             if self.n_interframe != 0:
                 self.n_stored_frames = self.n_total_frames
+        elif conf.game in (HARRY_POTTER_1_PS1, HARRY_POTTER_2_PS1):
+            self.n_stored_frames = int.from_bytes(data[start + 32: start + 36], 'little')
+            base_header_size = 48
+            flags_size = 4
+            additional_frame_data_size = 8
         else:
-            raise NotImplementedError
+            raise NotImplementedError(UNSUPPORTED_GAME)
 
         self.flags: bytes = data[start + base_header_size:start + base_header_size + 4 * self.flags_count]
 

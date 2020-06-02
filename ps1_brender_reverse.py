@@ -50,8 +50,7 @@ def parse_files(paths: Union[List[Path], Tuple[Path]], separated_wads: bool):
                                Configuration(args.game, args.ignore_warnings, args.process_all_sections))
             wad_print = f"{wad_file.xspt.texture_file.n_textures:>4} textures"
             if args.extract_textures:
-                wad_file.xspt.texture_file.generate_colorized_texture().save(
-                    tex_path / f"{wads_names[i][:-4]} clean.PNG")
+                wad_file.xspt.texture_file.generate_colorized_texture().save(tex_path / f"{wads_names[i][:-4]}.PNG")
             if args.process_all_sections:
                 wad_print += f", {wad_file.xspd.model_file.n_models:>4} models, " \
                              f"{wad_file.xspd.animation_file.n_animations:>4} animations"
