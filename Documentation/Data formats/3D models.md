@@ -86,7 +86,7 @@ So you can link them in this order for example: `1, 2, 4, 3`.
 
 #### Vertex groups
 
-Each vertex and each vertex normal contain an index.
+Each vertex and vertex normal contains an index.
 Those indexes decrease until they reach 1, which shows the end of the present group.
 As we know this, we can separate them into vertex groups.  
 An example:

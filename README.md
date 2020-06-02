@@ -2,6 +2,8 @@
 
 ### Unofficial documentation of PS1 BRender games formats & Python extraction scripts.
 
+> Extracted assets: [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets).
+
 #### Currently supported games (Animations, 3D models, textures)
 - Croc 2
 - Croc 2 Demo (including dummy WADs)
@@ -15,8 +17,7 @@ Therefore, this documentation and these tools cannot work with all BRender games
 
 ## How to use the Python scripts
 1. (Optional) Create a virtual environment (venv) and activate it.
-2. Install the required Python packages (or the required + the optional ones, if you want to use the COLLADA export):
-`pip install -r requirements.txt` (`pip install -r optional-requirements.txt`).
+2. Install the required Python packages: `pip install -r requirements.txt`.
 3. You can now launch the scripts, there are 2 at the moment:
  - dat_slicing.py: Extracts all files (like WADs) from raw game files (.DIR/.DAT).
  - ps1_brender_reverse.py: Processes raw game files or WADs and extract assets from them (only textures for now).
