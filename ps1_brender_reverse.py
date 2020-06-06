@@ -17,9 +17,11 @@ group.add_argument("-wad", action='append', type=str,
                    help="The file path to a WAD file / a folder containing WAD files", metavar="WAD_PATH")
 parser.add_argument("-tex", "--extract-textures", type=str, help="Extracts textures to the given folder",
                     metavar="FOLDER_PATH")
+parser.add_argument("-mod", "--extract-models", type=str, help="Extracts 3D models to the given folder",
+                    metavar="FOLDER_PATH")
 parser.add_argument("-all", "--process-all-sections", action='store_true',
-                    help="By default, this script only reads textures information to greatly reduce the processing "
-                         "duration. This option forces the processing of 3D models & animations.")
+                    help="DEBUG | By default, this script only reads textures information to greatly reduce the "
+                         "processing duration. This option forces the processing of 3D models & animations.")
 parser.add_argument("--ignore-warnings", action='store_true',
                     help="Allows the program to continue its execution after triggering a warning.")
 args = parser.parse_args()
@@ -42,6 +44,10 @@ def parse_files(paths: Union[List[Path], Tuple[Path]], separated_wads: bool):
                 if files_names[i][-4:] == '.WAD':
                     wads_data.append(files_data[i])
                     wads_names.append(files_names[i])
+    if args.extract_models:
+        args.process_all_sections = True
+        input("Models extraction is VERY EXPERIMENTAL, some models will be completely broken or even missing. "
+              "Press <Enter> to continue.\n")
     for i in range(len(wads_names)):
         try:
             print(f"Processing {wads_names[i]}..")
@@ -51,9 +57,11 @@ def parse_files(paths: Union[List[Path], Tuple[Path]], separated_wads: bool):
             wad_print = f"{wad_file.xspt.texture_file.n_textures:>4} textures"
             if args.extract_textures:
                 wad_file.xspt.texture_file.generate_colorized_texture().save(tex_path / f"{wads_names[i][:-4]}.PNG")
+            if args.extract_models:
+                wad_file.extract_experimental_models(Path(args.extract_models) / wads_names[i][:-4], wads_names[i][:-4])
             if args.process_all_sections:
-                wad_print += f", {wad_file.xspd.model_file.n_models:>4} models, " \
-                             f"{wad_file.xspd.animation_file.n_animations:>4} animations"
+                wad_print += f", {wad_file.xspd.model_file.n_models:>4} models" \
+                             f", {wad_file.xspd.animation_file.n_animations:>4} animations"
             print(wad_print)
         except SectionNameError:
             print("Not a correct WAD file (generally FESOUND or FETHUND)")

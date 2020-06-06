@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 from typing import List
 
@@ -8,6 +9,7 @@ from ps1_brender.files import AnimationFile, ModelFile, TextureFile
 
 class WADFile:
     def __init__(self, data: bytes, start: int, conf: Configuration):
+        self.conf = conf
         codenames: List[str] = []
         offsets: List[int] = []
         offset = start + 4
@@ -33,34 +35,52 @@ class WADFile:
             self.animations = self.xspd.animation_file.animations
 
     # FIXME: EXPERIMENTAL: 3D model + animation linking is only guessed
-    def extract_experimental_models(self, folder_path: str, filename: str):
+    def extract_experimental_models(self, folder_path: Path, filename: str):
         """Tries to find one compatible animation for each model in the WAD, animate it to make it clean
         (see doc about 3D models) and extract them into Wavefront OBJ files at the given location."""
-        folder_path = Path(folder_path)
+
+        def guess_compatible_animation(position: int, n_vertex_groups: int):
+            """EXPERIMENTAL: Band-aid, will be removed when animations' model id is found & reversed."""
+            position = int((position / self.xspd.animation_file.n_animations) * self.xspd.animation_file.n_animations)
+            a = int(position)
+            b = int(math.ceil(position))
+            while a > -1 or b < self.xspd.animation_file.n_animations:
+                if a > -1:
+                    if self.animations[a].n_vertex_groups == n_vertex_groups:
+                        return a
+                    a -= 1
+                if b < self.xspd.animation_file.n_animations:
+                    if self.animations[b].n_vertex_groups == n_vertex_groups:
+                        return b
+                    b += 1
+            return None
+
         if not folder_path.exists():
             folder_path.mkdir()
         elif folder_path.is_file():
             raise FileExistsError
 
-        animation_id = 0
+        if self.conf.debug:
+            print(f"anims :{[x.n_vertex_groups for x in self.animations]}")
+            print(f"models:{[x.n_vertex_groups for x in self.models]}")
+
         with (folder_path / (filename + '.MTL')).open('w') as mtl:
             mtl.write(wavefront_header + f"newmtl mtl1\nmap_Kd {filename}.PNG")
         self.xspt.texture_file.generate_colorized_texture().save(folder_path / (filename + '.PNG'))
 
         for i in range(self.xspd.model_file.n_models):
-            while self.models[i].n_vertex_groups != self.animations[animation_id].n_vertex_groups:
-                animation_id += 1
-                if animation_id == self.xspd.animation_file.n_animations:
-                    break
-            if animation_id == self.xspd.animation_file.n_animations:
-                break
-
-            obj_filename = f"{filename}_{i}"
             if self.models[i].n_vertex_groups == 1:
                 vertices = self.models[i].ungrouped_vertices
                 vertices_normals = self.models[i].ungrouped_vertices_normals
             else:
-                vertices, vertices_normals = self.models[i].animate(self.animations[animation_id])
+                animation_id = guess_compatible_animation(i, self.models[i].n_vertex_groups)
+                if animation_id is None:
+                    vertices = self.models[i].ungrouped_vertices
+                    vertices_normals = self.models[i].ungrouped_vertices_normals
+                else:
+                    vertices, vertices_normals = self.models[i].animate(self.animations[animation_id])
+
+            obj_filename = f"{filename}_{i}"
             obj = ModelData.to_obj(vertices, vertices_normals, self.models[i].faces, self.models[i].faces_texture_id,
                                    self.xspt.texture_file, obj_filename, filename)
             with (folder_path / (obj_filename + '.OBJ')).open('w', encoding='ASCII') as obj_file:

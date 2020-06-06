@@ -61,13 +61,11 @@ class AnimationData:
         self.n_vertex_groups = self.header.n_vertex_groups
 
         if conf.debug:
-            debug_print = f"{start}|{self.header.old_animation_format}\n"
-            f"start:{start}|frames:{self.header.n_stored_frames}/{self.header.n_total_frames}|"
-            f"vg:{self.n_vertex_groups}|hasdata:{self.header.has_additional_data}|"
-            f"header_size:{self.header.total_header_size}\n"
-            f"{data[start:start + 48].hex(' ', 4)}"
-            # f"fc:{self.header.idk_count}|flags:{self.header.idk.hex(' ', 2)}\nindexes:{self.frame_indexes}"
-            print(debug_print)
+            first_bytes = data[start:start + self.header.total_header_size].hex(' ', 4)
+            print(f"start:{start}|frames:{self.header.n_stored_frames}/{self.header.n_total_frames}|"
+                  f"{self.header.old_animation_format}|vg:{self.n_vertex_groups}|"
+                  f"hasdata:{self.header.has_additional_data}|header_size:{self.header.total_header_size}\n"
+                  f"{first_bytes[:107]}|{first_bytes[108:]}")
 
         if conf.game not in (
                 CROC_2_PS1, CROC_2_DEMO_PS1, CROC_2_DEMO_PS1_DUMMY, HARRY_POTTER_1_PS1, HARRY_POTTER_2_PS1):
