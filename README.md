@@ -33,7 +33,7 @@ Don't hesitate to contact me / open an issue / submit a pull request if you have
 - Some documentation files can be hard to understand, sorry about that.
 
 ## Contact
-You can currently contact me on Discord via [PSXDev Network's guild](http://www.psxdev.net/discord.php).
+You can currently contact me on Discord on several guilds (XeNTaX, TCRF, HP Modding, HP Console Speedruns, hpgames.net, Croc & Stuff, PSXDEV Network & more).
 
 #### Huge thanks to my friends Dobbyatemysock and supluk for supporting me and sharing their ideas.
 #### Thanks to MasterLeoBlue for advising me to use my scripts on Croc 2: it was a good idea !
