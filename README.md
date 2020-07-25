@@ -16,6 +16,9 @@ However, the engine seems to have evolved a lot over time, causing the file form
 Therefore, this documentation and these tools cannot work with all BRender games, especially non-PS1 ones.  
 
 ## How to use the Python scripts
+
+> Check that the assets you seek are not already extracted on [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets) before using ps1_brender_reverse.py. 
+
 1. (Optional) Create a virtual environment (venv) and activate it.
 2. Install the required Python packages: `pip install -r requirements.txt`.
 3. You can now launch the scripts, there are 2 at the moment:
@@ -33,7 +36,7 @@ Don't hesitate to contact me / open an issue / submit a pull request if you have
 - Some documentation files can be hard to understand, sorry about that.
 
 ## Contact
-You can currently contact me on Discord on several guilds (XeNTaX, TCRF, HP Modding, HP Console Speedruns, hpgames.net, Croc & Stuff, PSXDEV Network & more).
+You can currently contact me on several Discord guilds (XeNTaX, TCRF, HP Modding, HP Console Speedruns, hpgames.net, Croc & Stuff, PSXDEV Network & more).
 
 #### Huge thanks to my friends Dobbyatemysock and supluk for supporting me and sharing their ideas.
 #### Thanks to MasterLeoBlue for advising me to use my scripts on Croc 2: it was a good idea !

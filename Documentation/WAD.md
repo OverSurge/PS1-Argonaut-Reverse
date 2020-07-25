@@ -32,9 +32,9 @@ Those data areas aren't reversed yet.
 ## Sections documentations
 
 - [XSPT](WAD%20sections/XSPT.md): Textures
-- [XSPS](WAD%20sections/XSPS.md): Sound (TODO)
+- [XSPS](WAD%20sections/XSPS.md): Sound effects and ambient tracks
 - FINU: Fonts & text management (TODO)
 - XSPL: Localization, translated strings (TODO)
 - [XSPD](WAD%20sections/XSPD.md): 3D models, animations, objects, 3D world & more (TODO)
 - TROP: **Unknown** (TODO)
-- [' DNE'](WAD%20sections/DNE.md): In older BRender games, it shows the end of the file, but in Harry Potter, it contains the background music (TODO)
+- [' DNE'](WAD%20sections/DNE.md): Delimits the end of the file. In Harry Potter, contains background music and level-specific sound effects

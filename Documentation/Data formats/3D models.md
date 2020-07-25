@@ -69,7 +69,7 @@ In order to preview it, you must apply an animation frame to it (from an [animat
 |0xC|0x2|3rd vertex index|
 |0xE|0x2|4th vertex index|If the face is a triangle (belongs to the 2nd [face group](#Face-groups)), this field is 0
 |0x10|0x2|Texture index|See [Textures](Textures.md)
-|0x12|0x2|**UNKNOWN**|Most probably flags, not reversed yet
+|0x12|0x2|Face flags|See [Face flags](#Face-flags-bit-by-bit-structure)
 
 #### Quadrilaterals vertices order
 
@@ -81,6 +81,20 @@ I'm not 100% sure of the order in which the vertices should be linked, but they 
 2       1
 ````
 So you can link them in this order for example: `1, 2, 4, 3`.
+
+#### Face flags bit by bit structure
+
+On your hex editor, the bits are in this order:  
+`| 07 06 05 04 03 02 01 00 | 15 14 13 12 11 10 09 08 |`
+
+|Bit|Usage|Notes|
+|:---|:---|:---|
+|0-10|**UNKNOWN**||
+|11|**UNKNOWN**|Most faces have this bit set|
+|12|**UNKNOWN**||
+|13|50% transparency|If this bit is set, the face is 50% transparent, else completely opaque|
+|14-15|**UNKNOWN**||
+
 
 ## Groups explanation
 

@@ -5,12 +5,10 @@ The XSPT section holds texture data. As it is the first section of every WAD, it
 
 ## Section structure
 
-### XSPT pre-header structure
-
 |Offset (h)|Size (h)|Usage|Notes|
 |:---|:---|:---|:---|
 |0x0|0x4|Section name|Value: `58 53 50 54` ("XSPT")|
-|0x4|0x4|Offset to the next section (XSPS)|
+|0x4|0x4|Offset to the next section|
 |0x8|**DEPENDS**|[XSPT header](#XSPT-header-structure)|In the dummy WADs of Croc 2 Demo, there is no XSPT header|
 |+0x0|**DEPENDS**|[Textures file](../Data%20formats/Textures.md)|
 
@@ -20,7 +18,7 @@ The XSPT section holds texture data. As it is the first section of every WAD, it
 
 |Offset (h)|Size (h)|Usage|Notes|
 |:---|:---|:---|:---|
-|0x0|0x4|Flags|See [XSPT flags](#XSPT-flags-structure)|
+|0x0|0x4|[XSPT flags](#XSPT-flags-structure)||
 
 - **If the 1st flags bit is set:**
     - **If the 4th flags bit is not set:**

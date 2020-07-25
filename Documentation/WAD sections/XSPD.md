@@ -16,7 +16,7 @@ I didn't manage to reverse this part yet. It could contain Argonaut Strategy Lan
 |Offset (h)|Size (h)|Usage|Notes|
 |:---|:---|:---|:---|
 |0x0|0x4|Section name|Value: `58 53 50 44` ("XSPD")|
-|0x4|0x4|Offset to the next section (TROP)|
+|0x4|0x4|Offset to the next section|
 |0x8|0x4|**UNKNOWN**|*Might* be 2 separate values of 2 bytes each
 |0xC|0x4|Maybe "unique textures" count|Same value as in [XSPT](XSPT.md) @0x2C
 |0x10|0x800|Demo mode data|See [Demo mode](../WAD.md#Demo-mode)
