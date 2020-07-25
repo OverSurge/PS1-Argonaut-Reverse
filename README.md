@@ -4,7 +4,7 @@
 
 > Extracted assets: [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets).
 
-#### Currently supported games (Animations, 3D models, textures)
+#### Currently supported games (Animations, 3D models, textures & audio (HP only))
 - Croc 2
 - Croc 2 Demo (including dummy WADs)
 - Harry Potter 1 PS1
