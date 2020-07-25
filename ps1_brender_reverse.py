@@ -63,7 +63,7 @@ def parse_files(paths: Union[List[Path], Tuple[Path]], separated_wads: bool):
             print(f"Processing {wads_names[i]:>12}.. ", end='')
             wad_file = ps1_brender.wad_sections.WADFile(
                 wads_data[i], 0, Configuration(args.game, args.ignore_warnings, parse_sections, args.verbose))
-            titles = ', '.join([x.strip('\0 ') for x in wad_file.titles])
+            titles = ', '.join([x.strip(' \0') for x in wad_file.titles])
             print(f"({titles})\n  ", end='')
 
             if 'XSPT' in parse_sections:
@@ -72,9 +72,10 @@ def parse_files(paths: Union[List[Path], Tuple[Path]], separated_wads: bool):
                 wad_file.xspt.texture_file.generate_colorized_texture().save(tex_path / f"{wads_names[i][:-4]}.PNG")
 
             if 'XSPS' in parse_sections:
-                total_tracks = len(wad_file.xsps_sound_effects) + len(wad_file.dne_sound_effects) + \
-                               len(wad_file.dialogues_bgms) + len(wad_file.ambient_tracks)
-                print(f" {total_tracks:>3} audio file(s)", end=' ')
+                if wad_file.xsps:
+                    total_tracks = len(wad_file.common_sound_effects) + len(wad_file.level_sound_effects) + \
+                                   len(wad_file.dialogues_bgms) + len(wad_file.ambient_tracks)
+                    print(f" {total_tracks:>3} audio file(s)", end=' ')
             if args.extract_audio:
                 wad_audio_folder_path = Path(args.extract_audio) / wads_names[i][:-4]
                 if not wad_audio_folder_path.exists():
