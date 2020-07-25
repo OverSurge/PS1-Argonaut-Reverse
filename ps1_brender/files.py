@@ -1,8 +1,8 @@
 import warnings
-from typing import List, Tuple, Union
+from typing import List, Union
 
 from ps1_brender import *
-from ps1_brender.data_models import AnimationData, ModelData, TextureData
+from ps1_brender.data_models import AnimationData, ModelData, TextureData, VAGSoundData
 
 
 class TextureFile:
@@ -72,17 +72,16 @@ class TextureFile:
         elif not isinstance(texture, TextureData):
             raise TypeError
 
-        if debug:
-            debug_print = f"w:{texture.width}|h:{texture.height}|box:{texture.box}|row:{texture.n_row}|" \
-                          f"col:{texture.n_column}|coords:{texture.coords}|"
-            if texture.paletted:
-                if texture.palette_256_colors:
-                    debug_print += f"palette256:{texture.palette_start}"
-                else:
-                    debug_print += f"palette16:{texture.palette_start}"
+        debug_print = f"w:{texture.width}|h:{texture.height}|box:{texture.box}|row:{texture.n_row}|" \
+                      f"col:{texture.n_column}|coords:{texture.coords}|"
+        if texture.paletted:
+            if texture.palette_256_colors:
+                debug_print += f"palette256:{texture.palette_start}"
             else:
-                debug_print += "nopalette"
-            print(debug_print)
+                debug_print += f"palette16:{texture.palette_start}"
+        else:
+            debug_print += "nopalette"
+        logging.debug(debug_print)
 
         palette = None
         res: Image.Image = Image.new('RGBA', (texture.width, texture.height), 'green' if debug else None)
@@ -175,6 +174,155 @@ class TextureFile:
         res: Image.Image = Image.new('RGBA', (self.image_size // 4, self.image_size))
         res.putdata(TextureFile.raw_as_true_color(self.raw_texture, 0, len(self.raw_texture)))
         return res
+
+
+class SoundFile:
+    def __init__(self, data: bytes, start: int, conf: Configuration):
+        self.size = start
+
+        flags = data[start]
+        self.has_ambient_tracks = bool(flags & 1)
+        assert flags & 2 == 0  # Bit 1 is always unset
+        self.has_common_sound_effects = bool(flags & 4)
+        self.has_level_sound_effects = bool(flags & 8)
+        assert self.has_ambient_tracks == bool(flags & 16)  # Bit 0 and 4 are identical
+
+        logging.debug(f"Flags: {flags}|Level sound effects: {self.has_level_sound_effects}|"
+                      f"Common sound effects: {self.has_common_sound_effects}|"
+                      f"Ambient tracks: {self.has_ambient_tracks}")
+
+        self.common_sound_effects = []  # Common sound effects can be found in the majority of the levels
+        self.common_sound_effects_vags: List[VAGSoundData] = []
+        self.ambient_tracks = []
+        self.ambient_vags: List[VAGSoundData] = []
+
+        self.level_sound_effect_groups = []
+        self.level_sound_effects = []  # Level sound effects are specific to one or some level(s)
+        self.dialogues_bgms = []  # BGM = BackGround Music
+
+        sound_effects_count = int.from_bytes(data[start + 4:start + 8], 'little')
+        logging.debug(f"sound effects count: {sound_effects_count}")
+        start += 8
+
+        # Common sound effects
+        if self.has_common_sound_effects:
+            self.common_sound_effects = [data[start + i * 20:start + (i + 1) * 20] for i in range(sound_effects_count)]
+            logging.debug(
+                "sound effect tracks:\n" + '\n'.join([track.hex(' ', 4) for track in self.common_sound_effects]))
+            for track in self.common_sound_effects:
+                assert track[8] < 2
+                assert int.from_bytes(track[9:9], 'little') in (0x0101, 0)
+                assert track[13:14] == b'\x00'
+                assert track[14:16] == b'\x42\x00'
+            start += sound_effects_count * 20
+
+        # Ambient tracks
+        if self.has_ambient_tracks:
+            ambient_tracks_headers_size = int.from_bytes(data[start:start + 4], 'little')
+            start += 4
+            assert ambient_tracks_headers_size % 20 == 0
+            ambient_tracks_count = ambient_tracks_headers_size // 20
+            self.ambient_tracks = [data[start + i * 20:start + (i + 1) * 20] for i in range(ambient_tracks_count)]
+            logging.debug(f"ambient_tracks_count:{ambient_tracks_count}\nambient tracks:\n" +
+                          '\n'.join([track.hex(' ', 4) for track in self.ambient_tracks]))
+            start += ambient_tracks_headers_size
+
+        # Level sound effects groups
+        self.idk1 = None
+        self.idk2 = None
+        if self.has_level_sound_effects:
+            level_sound_effect_groups_count = int.from_bytes(data[start:start + 4], 'little')
+            self.idk1 = data[start + 4:start + 8]
+            self.idk2 = data[start + 8:start + 12]
+            logging.debug(f"Level effects groups count: {level_sound_effect_groups_count}\n"
+                          f"Unknown level effects values: {self.idk1.hex()}({int.from_bytes(self.idk1, 'little')})/"
+                          f"{self.idk2.hex()}({int.from_bytes(self.idk2, 'little')})")
+            ff_groups_count = int.from_bytes(data[start + 12:start + 16], 'little')
+            start += 16
+
+            self.level_sound_effect_groups = \
+                [data[start + i * 16:start + (i + 1) * 16] for i in range(level_sound_effect_groups_count)]
+            level_sound_effect_groups_counts = []
+            logging.debug("Level effects groups headers:\n" +
+                          '\n'.join([track.hex(' ', 4) for track in self.level_sound_effect_groups]))
+            for track in self.level_sound_effect_groups:
+                level_sound_effect_groups_counts.append(int.from_bytes(track[4:8], 'little'))
+
+            level_sound_effect_groups_sum = \
+                sum([int.from_bytes(x[12:16], 'little') for x in self.level_sound_effect_groups])
+            level_sound_effects_count = sum(level_sound_effect_groups_counts)
+            logging.debug(f"Level effects groups sizes sum: {level_sound_effect_groups_sum}\n"
+                          f"Level effects count: {level_sound_effects_count}\nLevel effects headers (20d):")
+            start += level_sound_effect_groups_count * 16
+
+            # Level sound effects
+            self.level_sound_effects: List[List[bytes]] = []
+            level_sound_effects_sum = 0
+            for count in level_sound_effect_groups_counts:
+                group = []
+                for i in range(count):
+                    track = data[start:start + 20]
+                    assert track[14:16] == b'\x42\x00'
+                    group.append(track)
+                    level_sound_effects_sum += int.from_bytes(track[16:20], 'little')
+                    start += 20
+                logging.debug('\n' + '\n'.join([track.hex(' ', 4) for track in group]))
+                self.level_sound_effects.append(group)
+
+            logging.debug(f"Level effects sizes sum: {level_sound_effects_sum}")
+            assert level_sound_effect_groups_sum == level_sound_effects_sum
+            start += ff_groups_count * 16
+
+        # Dialogues & BGMs
+        dialogues_count = int.from_bytes(data[start:start + 4], 'little')
+        logging.debug(f"dialogues count: {dialogues_count}")
+        start += 4
+        if self.has_common_sound_effects:
+            # Gap between level sound effects and dialogues/BGMs
+            dne_gap = int.from_bytes(data[start:start + 4], 'little')
+            assert (dne_gap != 0) == self.has_level_sound_effects
+            start += 4
+
+            self.dialogues_bgms = [data[start + i * 16:start + (i + 1) * 16] for i in range(dialogues_count)]
+            logging.debug(f"DNE gap: {dne_gap} / {data[start:start + 4].hex()}\ndialogues headers:\n" + '\n'.join(
+                [f"{i:>3}:{self.dialogues_bgms[i].hex(' ', 4)}" for i in range(len(self.dialogues_bgms))]))
+
+            # TODO: Not always null
+            # for track in self.dialogues_bgms:
+            #     assert track[8:12] == b"\x00\x00\x00\x00"
+
+            self.dialogues_tracks_sizes_sum = sum([int.from_bytes(x[12:16], 'little') for x in self.dialogues_bgms])
+            logging.debug(f"dialogues tracks sum: {self.dialogues_tracks_sizes_sum}")
+            start += 16 * dialogues_count
+
+        effect_tracks_sizes_sum = sum(
+            [int.from_bytes(x[16:20], 'little') for x in self.common_sound_effects]) if self.common_sound_effects else 0
+        ambient_tracks_sizes_sum = sum(
+            [int.from_bytes(x[16:20], 'little') for x in self.ambient_tracks]) if self.ambient_tracks else 0
+
+        # Common sound effects audio data
+        if self.has_common_sound_effects:
+            declared_size = int.from_bytes(data[start:start + 4], 'little')
+            assert declared_size == effect_tracks_sizes_sum
+            start += 4
+            for track in self.common_sound_effects:
+                size = int.from_bytes(track[16:20], 'little')
+                self.common_sound_effects_vags.append(VAGSoundData(
+                    size, data[start:start + size], 1, int.from_bytes(track[0:4], 'little'), conf))
+                start += size
+
+        # Ambient tracks audio data
+        if self.has_ambient_tracks:
+            declared_size = int.from_bytes(data[start:start + 4], 'little')
+            assert declared_size == ambient_tracks_sizes_sum
+            start += 4
+            for track in self.ambient_tracks:
+                size = int.from_bytes(track[16:20], 'little')
+                self.ambient_vags.append(VAGSoundData(
+                    size, data[start:start + size], 1, int.from_bytes(track[0:4], 'little'), conf))
+                start += size
+
+        self.size = start - self.size
 
 
 class ModelFile:
