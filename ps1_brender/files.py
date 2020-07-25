@@ -211,8 +211,7 @@ class SoundFile:
                 "sound effect tracks:\n" + '\n'.join([track.hex(' ', 4) for track in self.common_sound_effects]))
             for track in self.common_sound_effects:
                 assert track[8] < 2
-                assert int.from_bytes(track[9:9], 'little') in (0x0101, 0)
-                assert track[13:14] == b'\x00'
+                assert track[9:12] in (b'\x01\x01\x00', b'\x00\x00\x00')
                 assert track[14:16] == b'\x42\x00'
             start += sound_effects_count * 20
 
@@ -295,15 +294,9 @@ class SoundFile:
             logging.debug(f"dialogues tracks sum: {self.dialogues_tracks_sizes_sum}")
             start += 16 * dialogues_count
 
-        effect_tracks_sizes_sum = sum(
-            [int.from_bytes(x[16:20], 'little') for x in self.common_sound_effects]) if self.common_sound_effects else 0
-        ambient_tracks_sizes_sum = sum(
-            [int.from_bytes(x[16:20], 'little') for x in self.ambient_tracks]) if self.ambient_tracks else 0
-
-        # Common sound effects audio data
-        if self.has_common_sound_effects:
+            # Common sound effects audio data
             declared_size = int.from_bytes(data[start:start + 4], 'little')
-            assert declared_size == effect_tracks_sizes_sum
+            assert declared_size == sum([int.from_bytes(x[16:20], 'little') for x in self.common_sound_effects])
             start += 4
             for track in self.common_sound_effects:
                 size = int.from_bytes(track[16:20], 'little')
@@ -314,7 +307,7 @@ class SoundFile:
         # Ambient tracks audio data
         if self.has_ambient_tracks:
             declared_size = int.from_bytes(data[start:start + 4], 'little')
-            assert declared_size == ambient_tracks_sizes_sum
+            assert declared_size == sum([int.from_bytes(x[16:20], 'little') for x in self.ambient_tracks])
             start += 4
             for track in self.ambient_tracks:
                 size = int.from_bytes(track[16:20], 'little')
