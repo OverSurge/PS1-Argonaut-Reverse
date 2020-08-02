@@ -23,13 +23,13 @@ Therefore, this documentation and these tools cannot work with all BRender games
 2. Install the required Python packages: `pip install -r requirements.txt`.
 3. You can now launch the scripts, there are 2 at the moment:
  - dat_slicing.py: Extracts all files (like WADs) from raw game files (.DIR/.DAT).
- - ps1_brender_reverse.py: Processes raw game files or WADs and extract assets from them (only textures for now).
+ - ps1_brender_reverse.py: Processes raw game files or WADs and extract assets from them.
 
 ## Disclaimers
 - Please read [this piece of documentation](Documentation/General%20information.md) before the other pages.
 - This project is **in progress**, so anything in this repo **may change anytime**.
 - This is my first reverse, please be indulgent. Also, any help or advice is appreciated !
-- I don't know MIPS assembly, so I am unable to reverse the code.
+- I don't plan on reversing the code at the moment.
 - I didn't manage to understand some values & concepts (yet).
 Don't hesitate to contact me / open an issue / submit a pull request if you have any valuable information.
 - The scripts can't create modified/forged assets yet, but I plan on making this possible.
