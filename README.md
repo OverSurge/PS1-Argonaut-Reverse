@@ -4,9 +4,9 @@
 
 > Extracted assets: [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets).
 
-#### Currently supported games (Animations, 3D models, textures & audio (HP only))
-- Croc 2
-- Croc 2 Demo (including dummy WADs)
+#### Currently supported games (Animations, 3D models, textures, maps & audio (HP only))
+- Croc 2 PS1
+- Croc 2 Demo PS1 (including DUMMY WADs)
 - Harry Potter 1 PS1
 - Harry Potter 2 PS1
 
@@ -17,7 +17,8 @@ Therefore, this documentation and these tools cannot work with all BRender games
 
 ## How to use the Python scripts
 
-> Check that the assets you seek are not already extracted on [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets) before using ps1_brender_reverse.py. 
+> Check that the assets you seek are not already extracted on [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets) before using ps1_brender_reverse.py.  
+> If they are not, it most probably means that they are not extractable or too experimental for now.
 
 1. (Optional) Create a virtual environment (venv) and activate it.
 2. Install the required Python packages: `pip install -r requirements.txt`.
@@ -28,7 +29,7 @@ Therefore, this documentation and these tools cannot work with all BRender games
 ## Disclaimers
 - Please read [this piece of documentation](Documentation/General%20information.md) before the other pages.
 - This project is **in progress**, so anything in this repo **may change anytime**.
-- This is my first reverse, please be indulgent. Also, any help or advice is appreciated !
+- This is my first reverse, please be indulgent. Also, any help or advice is appreciated !
 - I don't plan on reversing the code at the moment.
 - I didn't manage to understand some values & concepts (yet).
 Don't hesitate to contact me / open an issue / submit a pull request if you have any valuable information.

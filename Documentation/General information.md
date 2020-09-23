@@ -9,6 +9,7 @@ BRender uses little endian. Consider all values as stored in little endian, unle
 #### Offsets
 
 Offsets are relative and must be added **after** the value's **end address**. An example:  
+
 ```
 00 00 00 00 | 00 00 00 0C | 01 02 03 04 | 05 06 07 08 | 09 0A 0B 0C | 00 00 00 00
               ↑↑ ↑↑ ↑↑ ↑↑                             ↑             ↑
@@ -23,7 +24,8 @@ It also means that, in order to retrieve a precise child, you must have correctl
 
 #### WAD "self-sufficiency" and redundancy
 
-The engine generally only loads one WAD at a time (at least, one level WAD (T1LxM00x)) (I have no proof of that).  
+The engine generally only loads one WAD at a time (at least, one level WAD (TxLxM00x)) (I have no proof of that).  
 That causes multiple WAD files to store the same assets (like Harry's 3D model, GUI icons, etc) multiple times, because they can't be loaded from another WAD.
 
 ### Thank you for reading this ! Have a look at the [WAD documentation](WAD.md) if you want to go any further.
+
