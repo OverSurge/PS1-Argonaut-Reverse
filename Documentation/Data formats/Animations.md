@@ -64,14 +64,16 @@ Starting with Harry Potter 1 PS1, the base header size increased (from 0x20 to 0
 | 0x4        | 0x4                                  | ∅ Empty             |                                                              |
 | 0x8        | 0x4                                  | Total frames count  | As opposed to stored frames count, this value even includes non-stored frames. Abbreviated to '**tf**' |
 | 0xC        | 0x4                                  | **UNKNOWN**         | I've only seen 2 values: 0 & 1. If == 0, some sort of data appears later. Abbreviated to '**uk**' |
-| 0x10       | 0x8                                  | Interframe count    | I don't know how this value is calculated. Abbreviated to '**ic**' |
+| 0x10       | 0x4                                  | Interframe count    | I don't know how this value is calculated. Abbreviated to '**ic**' |
+| 0x14       | 0x4                                  | ∅ Empty             |                                                              |
 | 0x18       | 0x4                                  | Vertex groups count | Abbreviated to '**vg**'                                      |
 | 0x1C       | 0x4                                  | ∅ Empty             |                                                              |
 | 0x20       | 0x4 × **uc**                         | **UNKNOWN**         | Can be nonexistent if **uc** == 0. Looks like some sort of flags, probably divided into 2-byte values that seems linked to a frame index (including non-stored ones) given the values I encountered |
 | +0x0       | 0x0 if **uk** == 1 else 0x8 × **tf** | **UNKNOWN**         | If **uk** == 0, what looks like frame data appear here       |
 | ++0x0      | 0x4 × **tf**                         | **UNKNOWN**         | Often zeros, but not always                                  |
-| +++0x0     | 0x8 × **ic**                         | **UNKNOWN**         | Interframe header data, unknown purpose                      |
-| ++++0x0    | 0x18 × **vg** × **tf**               | Animation frames    | See [Old animation format](#Old-animation-format) (it was the only one used back then) |
+| +++0x0     | 0x0 or 0x4 × **sf**                  | **UNKNOWN**         | Can be nonexistent if there are no interframes (interframe count == 0) |
+| ++++0x0    | 0x8 × **ic**                         | **UNKNOWN**         | Interframe header data, unknown purpose                      |
+| +++++0x0   | 0x18 × **vg** × **tf**               | Animation frames    | See [Old animation format](#Old-animation-format) (it was the only one used back then) |
 
 
 ### Old animation format
