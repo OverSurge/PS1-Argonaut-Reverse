@@ -1,22 +1,21 @@
+import math
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-import numpy as np
-
-from ps1_brender import *
-from ps1_brender.wad_sections import XSPTSection
+from ps1_brender.configuration import G
+from ps1_brender.errors_warnings import ReverseError
 
 
-def parse_dir_dat_paths(input_path: Path, game: Game):
+def parse_dir_dat_paths(input_path: Path, game: G):
     if input_path.is_dir():
-        if game != CROC_2_DEMO_PS1_DUMMY:
+        if game != G.CROC_2_DEMO_PS1_DUMMY:
             dir_path = input_path / game.dir_filename
             dat_path = input_path / game.dat_filename
         else:  # CROC 2 DEMO DUMMY file has no .DIR file
             dir_path = None
             dat_path = input_path / game.dat_filename
     elif input_path.is_file():
-        if game != CROC_2_DEMO_PS1_DUMMY:
+        if game != G.CROC_2_DEMO_PS1_DUMMY:
             if input_path.suffix == '.DIR':
                 dir_path = input_path
                 dat_path = input_path.parent / (input_path.stem + '.DAT')
@@ -33,18 +32,18 @@ def parse_dir_dat_paths(input_path: Path, game: Game):
     return dir_path, dat_path
 
 
-def slice_dat(dir_path: Optional[Path], dat_path: Path, game: Game):
+def slice_dat(dir_path: Optional[Path], dat_path: Path, game: G):
     files_data: List[bytes] = []
     files_names: List[str] = []
     files: List[Tuple[str, int, int]] = []
-    if game == CROC_2_DEMO_PS1_DUMMY:
+    if game == G.CROC_2_DEMO_PS1_DUMMY:
         start = 0
         dat_data = dat_path.read_bytes()
         while True:
             offset = int.from_bytes(dat_data[start:start + 4], 'little')
             # WADs start with the 'XSPT' codename
-            suffix = '.WAD' if dat_data[start + 4:start + 8] == XSPTSection.codename_bytes else '.DEM'
-            end = 2048 * np.math.ceil((start + offset) / 2048)
+            suffix = '.WAD' if dat_data[start + 4:start + 8] == b'XSPT' else '.DEM'
+            end = 2048 * math.ceil((start + offset) / 2048)
             files_data.append(dat_data[start:end])
             files_names.append(hex(start)[2:].rjust(7, '0') + suffix)
             start = end
@@ -71,6 +70,6 @@ def slice_dat(dir_path: Optional[Path], dat_path: Path, game: Game):
     return files_data, files_names
 
 
-def parse_and_slice(input_path: Path, game: Game):
+def parse_and_slice(input_path: Path, game: G):
     dir_path, dat_path = parse_dir_dat_paths(input_path, game)
     return slice_dat(dir_path, dat_path, game)

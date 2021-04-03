@@ -1,12 +1,12 @@
 import argparse
 from pathlib import Path
 
-from ps1_brender import *
+from ps1_brender.configuration import SLICEABLE_GAMES, SUPPORTED_GAMES
 from scripts_functions import parse_and_slice
 
 parser = argparse.ArgumentParser(
     description="Utility to extract WAD files from BRender games like Croc & Harry Potter PS1. By OverSurge.")
-parser.add_argument("game", type=str, choices=[game.title for game in EXTRACTABLE_GAMES],
+parser.add_argument("game", type=str, choices=[game.title for game in SLICEABLE_GAMES],
                     help="The game the files are from. If it is not listed, choose one you think is the closest.")
 parser.add_argument("dirdat", type=str,
                     help="Where the DIR/DAT files are located.")

@@ -1,4 +1,9 @@
+# Python
 __pycache__/
 venv/
 
+# JetBrains
 .idea/
+
+# Other
+ignored/
