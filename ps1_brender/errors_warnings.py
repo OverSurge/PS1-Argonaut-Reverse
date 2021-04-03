@@ -1,6 +1,6 @@
 class UnsupportedReverse(NotImplementedError):
     def __init__(self, feature_name):
-        super().__init__(f"Sorry, {feature_name} parsing / extraction isn't supported (yet) on this game.")
+        super().__init__(f"Sorry, {feature_name} parsing / exporting isn't supported (yet) on this game.")
 
 
 class ReverseError(Exception):

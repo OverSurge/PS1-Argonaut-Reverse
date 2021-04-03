@@ -145,7 +145,7 @@ class TextureFile(BaseBRenderClass):
     # Debug functions
 
     def generate_greyscale_texture(self):
-        """Debug use, do not use for textures extraction ! Draws the complete texture image in greyscale."""
+        """Debug use, do not use for textures export ! Draws the complete texture image in greyscale."""
         res: Image.Image = Image.new('L', (self.image_size, self.image_size))
         for i in range(len(self.raw_texture)):
             pixel1 = self.raw_texture[i] & 15
@@ -158,7 +158,7 @@ class TextureFile(BaseBRenderClass):
         return res
 
     def generate_true_color_texture(self):
-        """Debug use, do not use for textures extraction ! Draws the complete texture image in greyscale."""
+        """Debug use, do not use for textures export ! Draws the complete texture image in greyscale."""
         res: Image.Image = Image.new('RGBA', (self.image_size // 4, self.image_size))
         res.putdata(TextureFile.raw_as_true_color(self.raw_texture, 0, len(self.raw_texture)))
         return res

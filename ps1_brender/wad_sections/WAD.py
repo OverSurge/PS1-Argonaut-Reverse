@@ -64,9 +64,9 @@ class WAD:
             mtl_file.write(wavefront_header + f"newmtl mtl1\nmap_Kd {wad_filename}.PNG")
         self.tpsx.texture_file.generate_colorized_texture().save(folder_path / (wad_filename + '.PNG'))
 
-    def extract_experimental_models(self, folder_path: Path, wad_filename: str):
-        """Tries to find one compatible animation for each model in the WAD, animate it to make it clean
-        (see doc about 3D models) and extract them into Wavefront OBJ files at the given location."""
+    def export_experimental_models(self, folder_path: Path, wad_filename: str):
+        """Tries to find one compatible animation for each model in the WAD, animates it to make it clean
+        (see doc about 3D models) and exports them into Wavefront OBJ files at the given location."""
         n_models = self.dpsx.models_3d_file.n_models
         n_animations = self.dpsx.animations_file.n_animations
 
@@ -92,21 +92,21 @@ class WAD:
             raise FileExistsError
 
         self._prepare_obj_export(folder_path, wad_filename)
-        for i, model3d in enumerate(self.dpsx.models_3d_file.models):
+        for i, model_3d in enumerate(self.dpsx.models_3d_file.models):
             obj_filename = f"{wad_filename}_{i}"
             with (folder_path / (obj_filename + '.OBJ')).open('w', encoding='ASCII') as obj_file:
-                if model3d.n_vertices_groups == 1:
-                    model3d.to_single_obj(obj_file, obj_filename, self.textures, wad_filename)
+                if model_3d.n_vertices_groups == 1:
+                    model_3d.to_single_obj(obj_file, obj_filename, self.textures, wad_filename)
                 else:
                     animation_id = guess_compatible_animation(i, self.models[i].n_vertices_groups)
                     if animation_id is None:
-                        model3d.to_single_obj(obj_file, obj_filename, self.textures, wad_filename)
+                        model_3d.to_single_obj(obj_file, obj_filename, self.textures, wad_filename)
                     else:
-                        model3d.animate(self.animations[animation_id]).to_single_obj(obj_file, obj_filename,
-                                                                                     self.textures, wad_filename)
+                        model_3d.animate(self.animations[animation_id]).to_single_obj(obj_file, obj_filename,
+                                                                                      self.textures, wad_filename)
 
-    def export_obj(self, model_id: int, folder_path: Path, filename: str):
-        """Exports this 3D model into a Wavefront OBJ file along with a MTL file and a texture file.
+    def export_model_3d(self, model_id: int, folder_path: Path, filename: str):
+        """Exports a 3D model into a Wavefront OBJ file along with a MTL file and a texture file.
         Avoid calling this function on a lot of 3D models at once, WAD batch export functions are made for that.
         If you do it anyway, the export will take a long time as a new texture file will be generated for each model."""
         self._prepare_obj_export(folder_path, filename)
@@ -115,7 +115,7 @@ class WAD:
             self.models[model_id].to_single_obj(obj, filename, self.textures, filename)
             obj_file.write(obj.getvalue())
 
-    def extract_audio(self, folder_path: Path, wad_filename: str):
+    def export_audio(self, folder_path: Path, wad_filename: str):
         if self.spsx:
             tracks_lists = [self.spsx.sound_file.common_sound_effects_vags, self.spsx.sound_file.ambient_vags,
                             self.end.level_sound_effects_vags, self.end.dialogues_bgms_vags]
@@ -127,7 +127,7 @@ class WAD:
                         filename += '_(BGM)'
                     (folder_path / f"{filename}.WAV").write_bytes(tracks_lists[i][j].to_wav(filename))
 
-    def extract_level(self, folder_path: Path, wad_filename: str):
+    def export_level(self, folder_path: Path, wad_filename: str):
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         elif folder_path.is_file():
