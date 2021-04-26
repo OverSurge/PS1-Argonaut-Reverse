@@ -8,14 +8,16 @@ The level format can be separated in 5 parts :
 - The actors and lighting information, which contains the position of the actors (characters, doors, etc) and how the level is lit.
 - The level footer, its use is not yet known.
 
-## BRender's levels concepts
+## Levels format's concepts
 
 
 ### General concept
 
-BRender's 3D world is divided into chunks (like in Minecraft). Most of them are empty. Each filled chunk can contain one or multiple subchunks, each one of them having a 3D model.  
+The 3D world is divided into chunks (like in Minecraft for example). Most of them are empty. Each filled chunk can
+contain one or multiple subchunks, each one of them having a 3D model.  
 Each chunk and subchunk is unique, but chunk 3D models are reusable, in order to reduce the file size.  
-Chunk 3D models' structure is very similar to regular BRender 3D models, except these ones don't contain normals (except in Croc 2 Demo Dummy WADs).
+Chunk 3D models' structure is very similar to regular 3D models, except these ones don't contain vertex normals (except
+in Croc 2 Demo dummy WADs).
 
 ### Axes
 
@@ -48,11 +50,12 @@ Chunks matrix ┬► Primary subchunk → Secondary subchunk
 
 ### Lighting
 
-BRender's lighting **doesn't** seem to use light sources (with a color and an intensity for example).  
+This level format **doesn't** seem to use light sources (with a position, a color and an intensity for example).  
 Instead, levels' lighting is pre-rendered and stored as one color per vertex, for each vertex in the level.  
-Usually, there is one lighting data structure for each subchunk (+ one for each additional lighting header), but there can be more in case of "dynamic" lighting (for example, near the fireplace in the common room).
+Usually, there is one lighting data structure for each subchunk (+ one for each additional lighting header), but there
+can be more in case of "dynamic" lighting (for example, near the fireplace in the common room).
 
-## File structure (in Harry Potter)
+## File structure
 
 > I cannot document the Croc level format yet, as I haven't managed to reverse it entirely. There are sound effects, textures and strings inside it (+ usual stuff there is in the newer format).  
 >
@@ -70,43 +73,66 @@ Unlike regular 3D models, chunk 3D models headers and data are separated: all he
 
 ### Level header
 
-| Size (h)      | Use                                   | Notes                                                        |
-| :------------ | :------------------------------------ | :----------------------------------------------------------- |
-| 0x8           | **UNKNOWN**                           |                                                              |
-| 0x4           | Subchunks count                       | Abbreviated to '**scc**'                                     |
-| 0x4           | Unknown count                         | Abbreviated to '**uk1**'                                     |
-| 0x4 × **uk1** | **UNKNOWN**                           |                                                              |
-| 0x4           | Subchunks count                       | Identical to the previous one. Abbreviated to '**scc**'      |
-| 0x2           | Actor instances count                 | Abbreviated to '**aic**'                                     |
-| 0x6           | **UNKNOWN**                           |                                                              |
-| 0x4           | Total chunks count (X × Z counts)     | Abbreviated to '**tcc**'                                     |
-| 0x4           | X axis chunks count ("chunk columns") |                                                              |
-| 0x4           | Z axis chunks count ("chunk rows")    |                                                              |
-| 0x2           | Lighting headers count                | Abbreviated to '**lc1**'. See [Lighting information](#Lighting-information-structure) |
-| 0x2           | Additional lighting headers count     | Abbreviated to '**lc2**'. See [Lighting information](#Lighting-information-structure) |
-| 0x4           | **UNKNOWN**                           |                                                              |
-| 0x4           | Unknown count                         | Abbreviated to '**uk2**'                                     |
-| 0x74          | **UNKNOWN**                           | Rest of the level header                                     |
+| Size (h)      | Use                                   | Notes                                   |
+| :------------ | :------------------------------------ | :-------------------------------------- |
+| 0x8           | **UNKNOWN**                           |                                         |
+| 0x4           | Subchunks count                       | Abbreviated to '**scc**'                |
+| 0x4           | Unknown count                         | Abbreviated to '**uk1**'                |
+| 0x4 × **uk1** | **UNKNOWN**                           |                                         |
+| 0x4           | Subchunks count                       | Identical to the previous one           |
+| 0x2           | Actor instances count                 | Abbreviated to '**aic**'                |
+| 0x2 or 0x6    | **UNKNOWN**                           | 0x2 in Croc 2 Demo dummy WADs, else 0x6 |
+| 0x4           | Total chunks count (X × Z counts)     | Abbreviated to '**tcc**'                |
+| 0x4           | X axis chunks count ("chunk columns") |                                         |
+| 0x4           | Z axis chunks count ("chunk rows")    |                                         |
+
+- **If the game isn't Croc 2 Demo dummy WADs:**
+
+  | Size (h) | Use                               | Notes                                                        |
+  | :------- | :-------------------------------- | :----------------------------------------------------------- |
+  | 0x2      | Lighting headers count            | Abbreviated to '**lc1**'. See [Lighting information](#Lighting-information-structure) |
+  | 0x2      | Additional lighting headers count | Abbreviated to '**lc2**'. See [Lighting information](#Lighting-information-structure) |
+  | 0x4      | **UNKNOWN**                       |                                                              |
+
+| Size (h)     | Use           | Notes                                                        |
+| :----------- | :------------ | :----------------------------------------------------------- |
+| 0x4          | Unknown count | Abbreviated to '**uk2**'                                     |
+| 0x50 or 0x74 | **UNKNOWN**   | Rest of the level header. 0x50 in Croc 2 Demo dummy WADs, else 0x74 |
 
 ### 3D world
 
-| Size (h)                    | Use                                                          | Notes                                                        |
-| :-------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| 0x4 × **tcc**               | Chunks matrix                                                |                                                              |
-| 0x8 × **scc**               | [Subchunks headers](#Subchunk-header-structure)              |                                                              |
-| 0x100                       | **UNKNOWN**                                                  | Doesn't change a lot between levels                          |
-| 0x4                         | Subchunks flags count                                        | Abbreviated to '**sfc**'                                     |
-| 0x4 × **sfc**               | Subchunks flags                                              | Unknown use                                                  |
-| 0x0, or 0x4 + 0x2 × **scc** | [fvw matrix](#fvw-matrix)                                    | Optional, the engine checks for the presence of `66 76 77 00` (fvw ) at that position and skips it if it doesn't match |
-| 0x18 × **scc**              | [Subchunks position information](#Subchunk-position-information-structure) |                                                              |
-| 0x4 × **scc**               | Subchunks 3D models mapping                                  | For each subchunk, stores the 3D models' id it uses          |
+| Size (h)      | Use                                             | Notes |
+| :------------ | :---------------------------------------------- | :---- |
+| 0x4 × **tcc** | Chunks matrix                                   |       |
+| 0x8 × **scc** | [Subchunks headers](#Subchunk-header-structure) |       |
+
+- **If the game isn't Croc 2 Demo dummy WADs:**
+  
+  | Size (h)                    | Use                       | Notes                                                        |
+  | :-------------------------- | :------------------------ | :----------------------------------------------------------- |
+  | 0x100                       | **UNKNOWN**               | Doesn't change a lot between levels                          |
+  | 0x4                         | Zone ids count            | AFAIK, equal to **tcc**                                      |
+  | 0x4 × **tcc**               | Zone ids                  | The same system exists in the [PORT section](../WAD%20sections/PORT.md), but reversed (which chunks belong to a zone) |
+  | 0x0, or 0x4 + 0x2 × **tcc** | [fvw matrix](#fvw-matrix) | Optional, the engine checks for the presence of `66 76 77 00` (fvw ) at that position and skips it if it doesn't match |
+
+| Size (h)       | Use                                                          | Notes                                               |
+| :------------- | :----------------------------------------------------------- | :-------------------------------------------------- |
+| 0x18 × **scc** | [Subchunks position information](#Subchunk-position-information-structure) |                                                     |
+| 0x4 × **scc**  | Subchunks 3D models mapping                                  | For each subchunk, stores the 3D models' id it uses |
 
 ### Actors & lighting information
 
+- **If the game isn't Croc 2 Demo dummy WADs:**
+  
+  | Size (h)       | Use              | Notes |
+  | :------------- | :--------------- | :---- |
+  | 0x54 × **lc1** | Lighting headers |       |
+
+> The rest of this documentation file only applies to Harry Potter, I'm still working on Croc 2.
+
 | Size (h)                                | Use                                                          | Notes                                                        |
 | :-------------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| 0x54 × **lc1**                          | Lighting headers                                             |                                                              |
-| 0x24 × **uk2**                          | **UNKNOWN**                                                  |                                                              |
+| 0x24 × **uk2**                          | **UNKNOWN**                                                  | TODO Has an impact on camera position, ability to cast spells, game rules, etc |
 | 0x40 × **aic**                          | [Actor instances headers](#Actor-instances-headers-structure) |                                                              |
 | 0x18 × **lc2**                          | Additional lighting headers                                  |                                                              |
 | 0x4                                     | Unknown count                                                | Abbreviated to '**uk3**'                                     |

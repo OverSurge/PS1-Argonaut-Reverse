@@ -1,10 +1,11 @@
 # General information
 
-This document lists BRender formats' key concepts.
+This document lists Argonaut PS1 formats' key concepts.
 
 #### Little endian
 
-BRender uses little endian. Consider all values as stored in little endian, unless otherwise specified.
+The vast majority of the formats uses little endian. Consider all values as stored in little endian, unless otherwise
+specified.
 
 #### Offsets
 
@@ -18,9 +19,11 @@ Offsets are relative and must be added **after** the value's **end address**. An
 
 #### "Chained" data structures
 
-A lot of BRender's data structures don't store the size of their children.  
-Consequently, if a value is misinterpreted during extraction and leads the script to misjudge the child's length, the script will, for example, try to interpret raw data as an amount value, and will crash.  
-It also means that, in order to retrieve a precise child, you must have correctly extracted (at least correctly calculated the sizes of) all previous children.
+A lot of data structures don't store the size of their children.  
+Consequently, if a value is misinterpreted during extraction and leads the script to misjudge the child's length, the
+script will, for example, try to interpret raw data as an amount value, and will crash.  
+It also means that, in order to retrieve a precise child, you must have correctly extracted (at least correctly
+calculated the sizes of) all previous children.
 
 #### WAD "self-sufficiency" and redundancy
 

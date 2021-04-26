@@ -39,24 +39,22 @@ This is what SPSX and END look like with all possible tracks. Depending on the S
 
 - **If the 2nd flags bit is set:**
 
-| Offset (h) | Size (h)       | Usage                                                        | Notes |
-| :--------- | :------------- | :----------------------------------------------------------- | :---- |
-| +0x0       | 0x14 × **sec** | [Common sound effects descriptors](#Common-sound-effects-descriptors) |       |
+  | Offset (h) | Size (h)       | Usage                                                        | Notes |
+  | :--------- | :------------- | :----------------------------------------------------------- | :---- |
+  | +0x0       | 0x14 × **sec** | [Common sound effects descriptors](#Common-sound-effects-descriptors) |       |
 
 - **If the 0th flags bit is set:**
 
-| Offset (h) | Size (h)       | Usage                                                     | Notes                    |
-| :--------- | :------------- | :-------------------------------------------------------- | :----------------------- |
-| +0x0       | 0x4            | Ambient tracks count                                      | Abbreviated to '**atc**' |
-| +0x4       | 0x14 × **atc** | [Ambient tracks descriptors](#Ambient-tracks-descriptors) |                          |
+  | Offset (h) | Size (h)       | Usage                                                     | Notes                    |
+  | :--------- | :------------- | :-------------------------------------------------------- | :----------------------- |
+  | +0x0       | 0x4            | Ambient tracks count                                      | Abbreviated to '**atc**' |
+  | +0x4       | 0x14 × **atc** | [Ambient tracks descriptors](#Ambient-tracks-descriptors) |                          |
 
 - **If the 3rd flags bit is set:**
 
-| Offset (h) | Size (h)    | Usage                                                        | Notes |
-| :--------- | :---------- | :----------------------------------------------------------- | :---- |
-| +0x0       | **DEPENDS** | [Level sound effects headers](#Level-sound-effects-headers-structure) |       |
-
-- **Always present:**
+  | Offset (h) | Size (h)    | Usage                                                        | Notes |
+  | :--------- | :---------- | :----------------------------------------------------------- | :---- |
+  | +0x0       | **DEPENDS** | [Level sound effects headers](#Level-sound-effects-headers-structure) |       |
 
 | Offset (h) | Size (h) | Usage                  | Notes                                    |
 | :--------- | :------- | :--------------------- | :--------------------------------------- |
@@ -64,19 +62,19 @@ This is what SPSX and END look like with all possible tracks. Depending on the S
 
 - **If the 2nd flags bit is set:**
 
-| Offset (h) | Size (h)       | Usage                                                        | Notes                                                        |
-| :--------- | :------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| +0x0       | 0x4            | END offset                                                   | If there are level sound effects (bit 3 set), they come before the dialogues & BGMs. This value is the offset to add at the start of END to get the beginning of the dialogues & BGMs. |
-| +0x4       | 0x10 × **dbc** | [Dialogues & BGMs descriptors](#Dialogues--BGMs-descriptors) |                                                              |
-| ++0x0      | 0x4            | Common sound effects audio data size                         | Abbreviated to '**ses**'                                     |
-| ++0x4      | **ses**        | Common sound effects audio data                              |                                                              |
+  | Offset (h) | Size (h)       | Usage                                                        | Notes                                                        |
+  | :--------- | :------------- | :----------------------------------------------------------- | :----------------------------------------------------------- |
+  | +0x0       | 0x4            | END offset                                                   | If there are level sound effects (bit 3 set), they come before the dialogues & BGMs. This value is the offset to add at the start of END to get the beginning of the dialogues & BGMs. |
+  | +0x4       | 0x10 × **dbc** | [Dialogues & BGMs descriptors](#Dialogues--BGMs-descriptors) |                                                              |
+  | ++0x0      | 0x4            | Common sound effects audio data size                         | Abbreviated to '**ses**'                                     |
+  | ++0x4      | **ses**        | Common sound effects audio data                              |                                                              |
 
 - **If the 0th flags bit is set:**
 
-| Offset (h) | Size (h) | Usage                          | Notes                    |
-| :--------- | :------- | :----------------------------- | :----------------------- |
-| +0x0       | 0x4      | Ambient tracks audio data size | Abbreviated to '**ats**' |
-| +0x4       | **ats**  | Ambient tracks audio data      |                          |
+  | Offset (h) | Size (h) | Usage                          | Notes                    |
+  | :--------- | :------- | :----------------------------- | :----------------------- |
+  | +0x0       | 0x4      | Ambient tracks audio data size | Abbreviated to '**ats**' |
+  | +0x4       | **ats**  | Ambient tracks audio data      |                          |
 
 ### SPSX flags structure
 

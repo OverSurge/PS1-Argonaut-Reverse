@@ -6,13 +6,10 @@ The WAD files are divided into several sections.
 Each section starts by a codename, followed by an offset that leads to the next section.
 
 - All versions of Croc 2 PS1 contain these sections (in order): TPSX, SPSX (Optional), DPSX and 'END ' (with a space).  
-  (Includes release, demo and demo dummy WADs)  
-- Harry Potter 1 & 2 PS1 contain these sections (in order): TPSX, SPSX, UNIF, LPSX, DPSX, PORT and ' END'.  
+  (Includes release, demo and demo dummy WADs)
+- Harry Potter 1 & 2 PS1 contain these sections (in order): TPSX, SPSX, UNIF, LPSX, DPSX, PORT and 'END '.
 
-These codenames are stored backwards : XSPT, XSPS, FINU, XSPL, XSPD, TROP and ' DNE'.
-Some sections codenames contain 'PSX' in their name (The PS1's codename).
-In my opinion, these sections were specifically coded in BRender for the PS1 platform.
-Therefore, it could mean that the other sections (or some) are platform-independent.
+These codenames are stored backwards, that is XSPT, XSPS, FINU, XSPL, XSPD, TROP and ' DNE'.
 
 ## Demo mode
 
@@ -36,7 +33,8 @@ Those data areas aren't reversed yet.
 - [SPSX](WAD%20sections/SPSX.md): Sound effects and ambient tracks
 - UNIF: Fonts & text management (TODO)
 - LPSX: Localization, translated strings (TODO)
-- [DPSX](WAD%20sections/DPSX.md): 3D models, animations, actors and level.
-- PORT: Rendering groups / zones & more (TODO)
-- ['END '](WAD%20sections/END.md): Delimits the end of the file. In Harry Potter, contains background music and level-specific sound effects
+- [DPSX](WAD%20sections/DPSX.md): 3D models, animations, actors and level
+- [PORT](WAD%20sections/PORT.md): Rendering groups / zones & more (TODO)
+- ['END '](WAD%20sections/END.md): Delimits the end of the file. In Harry Potter, contains background music and
+  level-specific sound effects
 

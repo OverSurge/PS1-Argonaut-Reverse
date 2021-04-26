@@ -24,23 +24,35 @@ In order to preview it, you must apply an animation frame to it (from an [animat
 
 > Extended data size, abbreviated to '**eds**', is 0x2C long in all versions of Croc 2, and 0x20 long in Harry Potter 1 PS1.
 
-| Offset (h) | Size (h)                                | Use                                                   | Notes                                                        |
-| :--------- | :-------------------------------------- | :---------------------------------------------------- | :----------------------------------------------------------- |
-| 0x0        | 0x48                                    | **UNKNOWN**                                           | The values around 0x30-0x43 may contain bounding box info<sup>**1**</sup>. Tinkering with them makes the models disappear before they hit the border of the screen and reappear when they are already entirely on screen |
-| 0x48       | 0x4                                     | Vertices count                                        | Abbreviated to '**vc**'                                      |
-| 0x4C       | 0x8                                     | ∅ Empty                                               |                                                              |
-| 0x54       | 0x4                                     | Faces count                                           | Abbreviated to '**fc**'                                      |
-| 0x58       | 0x4                                     | ∅ Empty                                               |                                                              |
-| 0x5C       | 0x2                                     | 1st amount of extended data                           | These 3 amounts are 0 most of the time, but in some models, this isn't the case, and data appear at the end of the model. Abbreviated to '**ed1**' |
-| 0x5E       | 0x2                                     | 2nd amount of extended data                           | Abbreviated to '**ed2**'                                     |
-| 0x60       | 0x2                                     | 3rd amount of extended data                           | Abbreviated to '**ed3**'                                     |
-| 0x62       | **DEPENDS**                             | ∅ Empty                                               | Size: Croc 2: 0x2, Harry Potter PS1: 0x6                     |
-| +0x0       | 0x8 × **vc**                            | [Vertices coordinates](#Vertex-coordinates-structure) |                                                              |
-| ++0x0      | 0x8 × **vc**                            | [Vertices normals](#Vertex-normal-structure)          | (Seems like vertices normals, but I could be wrong)          |
-| +++0x0     | 0x14 × **fc**                           | [Faces](#Face-structure)                              |                                                              |
-| ++++0x0    | **eds** × (**ed1** + **ed2** + **ed3**) | **UNKNOWN**                                           | Can be nonexistent if sum is 0. Extended data, unknown use for now. Could be related to faces, as the sum is often equal to face count |
+| Offset (h)   | Size (h)                                                     | Use                                 |
+| ------------ | ------------------------------------------------------------ | ----------------------------------- |
+| 0x0          | 0x64 in Croc 2 PS1 or 0x68 in Harry Potter PS1               | [3D model header](#3D-model-header) |
+| 0x64 or 0x68 | 0x10 × **vc** + 0x14 × **fc** + **eds** × (**ed1** + **ed2** + **ed3**) | [3D model data](#3D-model-data)     |
+
+#### 3D model header
+
+| Offset (h) | Size (h)    | Use                         | Notes                                                        |
+| :--------- | :---------- | :-------------------------- | :----------------------------------------------------------- |
+| 0x0        | 0x48        | **UNKNOWN**                 | The values around 0x30-0x43 may contain bounding box info<sup>**1**</sup>. Tinkering with them makes the models disappear before they hit the border of the screen and reappear when they are already entirely on screen |
+| 0x48       | 0x4         | Vertices count              | Abbreviated to '**vc**'                                      |
+| 0x4C       | 0x8         | ∅ Empty                     |                                                              |
+| 0x54       | 0x4         | Faces count                 | Abbreviated to '**fc**'                                      |
+| 0x58       | 0x4         | ∅ Empty                     |                                                              |
+| 0x5C       | 0x2         | 1st amount of extended data | These 3 amounts are 0 most of the time, but in some models, this isn't the case, and data appear at the end of the model. Abbreviated to '**ed1**' |
+| 0x5E       | 0x2         | 2nd amount of extended data | Abbreviated to '**ed2**'                                     |
+| 0x60       | 0x2         | 3rd amount of extended data | Abbreviated to '**ed3**'                                     |
+| 0x62       | **DEPENDS** | ∅ Empty                     | Size: Croc 2 PS1: 0x2, Harry Potter PS1: 0x6                 |
 
 <sup>**1**</sup> : Similarities with [Croc 1's Format/Content Revision](https://web.archive.org/web/20140708201323/http://www.epiczen.net/crocfileformats.html) by Rexhunter, Andre, Zane, Paul
+
+#### 3D model data
+
+| Offset (h) | Size (h)                                | Use                                                   | Notes                                                        |
+| :--------- | :-------------------------------------- | :---------------------------------------------------- | :----------------------------------------------------------- |
+| 0x0        | 0x8 × **vc**                            | [Vertices coordinates](#Vertex-coordinates-structure) |                                                              |
+| +0x0       | 0x8 × **vc**                            | [Vertices normals](#Vertex-normal-structure)          | (Seems like vertices normals, but I could be wrong)          |
+| ++0x0      | 0x14 × **fc**                           | [Faces](#Face-structure)                              |                                                              |
+| +++0x0     | **eds** × (**ed1** + **ed2** + **ed3**) | **UNKNOWN**                                           | Can be nonexistent if sum is 0. Extended data, unknown use for now. Could be related to faces, as the sum is often equal to face count |
 
 ### Vertex coordinates structure
 

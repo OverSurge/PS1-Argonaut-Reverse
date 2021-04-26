@@ -5,9 +5,9 @@ Structure detailed in [TPSX documentation](../WAD%20sections/TPSX.md).
 The texture format is pretty complex, I tried to document it the best I could.  
 Contact me if you need help understanding it.
 
-## BRender's textures concepts
+## Textures format's concepts
 
-In order to understand how BRender textures work, I advise you to read this part of the documentation.
+In order to understand how this engine's textures work, I advise you to read this part of the documentation.
 
 ### General concept
 
@@ -33,10 +33,10 @@ Legacy textures are composed of 5 uncompressed textures (256-colors paletted) of
 So far, I encountered 3 different types of color storage techniques, divided into 2 categories:
 
 - Not using a color palette:
-  1. [15-bit high color](#15-bit-high-color) (16bit/pixel): Mainly used for storing the colors inside the palettes. Used by a few textures.
+  - [15-bit high color](#15-bit-high-color) (16bit/pixel): Mainly used for storing the colors inside the palettes. Used by a few textures.
 - Using a color palette:
-  2. [16-color palettes](#16-color-palettes) (4bit/pixel): Used by the vast majority of the textures.
-  3. [256-color palettes](#256-color-palettes) (8bit/pixel): Used by some textures requiring a lot of different colors (sky textures for example).
+  - [16-color palettes](#16-color-palettes) (4bit/pixel): Used by the vast majority of the textures.
+  - [256-color palettes](#256-color-palettes) (8bit/pixel): Used by some textures requiring a lot of different colors (sky textures for example).
 
 #### 15-bit high color
 
