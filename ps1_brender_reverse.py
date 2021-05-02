@@ -73,7 +73,7 @@ def parse_files(paths: Union[List[Path], Tuple[Path]], separated_wads: bool):
 
             if 'XSPS' in parse_sections:
                 if wad_file.spsx:
-                    total_tracks = len(wad_file.common_sound_effects) + len(wad_file.level_sound_effects) + \
+                    total_tracks = len(wad_file.common_sound_effects) + len(wad_file.level_sound_effects_groups) + \
                                    len(wad_file.dialogues_bgms) + len(wad_file.ambient_tracks)
                     print(f" {total_tracks:>3} audio file(s)", end=' ')
             if args.export_audio:

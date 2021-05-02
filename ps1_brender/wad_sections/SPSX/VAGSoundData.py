@@ -4,6 +4,9 @@ from io import BufferedIOBase
 from ps1_brender.configuration import Configuration, wav_header
 from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
 
+MONO = 1
+STEREO = 2
+
 
 class VAGSoundData(BaseBRenderClass):
     constants = ((0.0, 0.0),
@@ -12,12 +15,12 @@ class VAGSoundData(BaseBRenderClass):
                  (98.0 / 64.0, -55.0 / 64.0),
                  (122.0 / 64.0, -60.0 / 64.0))
 
-    def __init__(self, size: int, data: bytes, channels: int, sampling_rate: int, conf: Configuration):
-        if channels != 1 and channels != 2:
+    def __init__(self, size: int, data: bytes, n_channels: int, sampling_rate: int, conf: Configuration):
+        if n_channels != MONO and n_channels != STEREO:
             raise ValueError
         self.size: int = size
         self.data: bytes = data
-        self.n_channels: int = channels
+        self.n_channels: int = n_channels
         self.sampling_rate: int = sampling_rate
         self.conf = conf
 

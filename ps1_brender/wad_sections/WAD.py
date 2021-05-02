@@ -1,7 +1,7 @@
 import math
 from io import BytesIO, SEEK_CUR, StringIO
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Union, List
 
 from ps1_brender.configuration import Configuration, wavefront_header
 from ps1_brender.errors_warnings import SectionNameError
@@ -10,6 +10,7 @@ from ps1_brender.wad_sections.DPSX.Model3DData import Model3DData
 from ps1_brender.wad_sections.ENDSection import ENDSection
 from ps1_brender.wad_sections.PORTSection import PORTSection
 from ps1_brender.wad_sections.SPSX.SPSXSection import SPSXSection
+from ps1_brender.wad_sections.SPSX.SoundDescriptors import SoundsHolder, DialoguesBGMsSoundFlags
 from ps1_brender.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
@@ -32,11 +33,11 @@ class WAD:
 
     @property
     def common_sound_effects(self):
-        return None if (self.spsx is None) else self.spsx.sound_file.common_sound_effects_vags
+        return None if (self.spsx is None) else self.spsx.common_sound_effects
 
     @property
     def ambient_tracks(self):
-        return None if (self.spsx is None) else self.spsx.sound_file.ambient_vags
+        return None if (self.spsx is None) else self.spsx.ambient_tracks
 
     @property
     def models(self):
@@ -52,11 +53,11 @@ class WAD:
 
     @property
     def level_sound_effects(self):
-        return None if (self.end is None) else self.end.level_sound_effects_vags
+        return None if (self.end is None) else self.spsx.level_sound_effects_groups
 
     @property
     def dialogues_bgms(self):
-        return None if (self.end is None) else self.end.dialogues_bgms_vags
+        return None if (self.end is None) else self.spsx.dialogues_bgms
 
     def _prepare_obj_export(self, folder_path: Path, wad_filename: str):
         """Exports the material (MTL) and texture (PNG) files that are needed by the OBJ Wavefront file."""
@@ -117,15 +118,16 @@ class WAD:
 
     def export_audio(self, folder_path: Path, wad_filename: str):
         if self.spsx:
-            tracks_lists = [self.spsx.sound_file.common_sound_effects_vags, self.spsx.sound_file.ambient_vags,
-                            self.end.level_sound_effects_vags, self.end.dialogues_bgms_vags]
+            tracks_lists: List[SoundsHolder] = [self.spsx.common_sound_effects, self.spsx.ambient_tracks,
+                                                self.spsx.level_sound_effects_groups, self.spsx.dialogues_bgms]
             tracks_prefixes = ('effect', 'ambient', 'level_effect', 'dialogue_bgm')
             for i in range(len(tracks_lists)):
                 for j in range(len(tracks_lists[i])):
                     filename = f"{wad_filename}_{tracks_prefixes[i]}_{j}"
-                    if tracks_lists[i][j] in self.end.bgm_only_vags:
+                    if i == 3 and DialoguesBGMsSoundFlags.IS_BACKGROUND_MUSIC in tracks_lists[i].descriptors[j].flags:
                         filename += '_(BGM)'
-                    (folder_path / f"{filename}.WAV").write_bytes(tracks_lists[i][j].to_wav(filename))
+                    print(i, j)
+                    (folder_path / f"{filename}.WAV").write_bytes(tracks_lists[i].vags[j].to_wav(filename))
 
     def export_level(self, folder_path: Path, wad_filename: str):
         if not folder_path.exists():
@@ -204,7 +206,7 @@ class WAD:
 
         if spsx:
             raw_data.seek(sections[ENDSection.codename_str])
-            end = ENDSection.parse(raw_data, conf, spsx.sound_file)
+            end = ENDSection.parse(raw_data, conf, spsx)
         else:
             end = None
 
