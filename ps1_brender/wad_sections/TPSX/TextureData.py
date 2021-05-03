@@ -5,13 +5,13 @@ from ps1_brender.configuration import Configuration, G
 
 
 class TextureData:
-    def __init__(self, raw_data: BufferedIOBase, conf: Configuration):
-        coords_1 = (raw_data.read(1)[0], raw_data.read(1)[0])
-        palette_info = int.from_bytes(raw_data.read(2), 'little')
-        coords_2 = (raw_data.read(1)[0], raw_data.read(1)[0])
-        flags = int.from_bytes(raw_data.read(2), 'little')  # Use a IntFlag class
-        coords_3 = (raw_data.read(1)[0], raw_data.read(1)[0])
-        coords_4 = (raw_data.read(1)[0], raw_data.read(1)[0])
+    def __init__(self, data_in: BufferedIOBase, conf: Configuration):
+        coords_1 = (data_in.read(1)[0], data_in.read(1)[0])
+        palette_info = int.from_bytes(data_in.read(2), 'little')
+        coords_2 = (data_in.read(1)[0], data_in.read(1)[0])
+        flags = int.from_bytes(data_in.read(2), 'little')  # Use a IntFlag class
+        coords_3 = (data_in.read(1)[0], data_in.read(1)[0])
+        coords_4 = (data_in.read(1)[0], data_in.read(1)[0])
         coords = [coords_1, coords_2, coords_3, coords_4]
 
         # Coordinates Mapping

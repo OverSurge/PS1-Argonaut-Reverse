@@ -13,7 +13,7 @@ class StrategyData(BaseBRenderClass):
         return len(self.data)
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        super().parse(raw_data, conf)
-        size = 4 * int.from_bytes(raw_data.read(4), 'little')
-        return cls(raw_data.read(size))
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        super().parse(data_in, conf)
+        size = 4 * int.from_bytes(data_in.read(4), 'little')
+        return cls(data_in.read(size))

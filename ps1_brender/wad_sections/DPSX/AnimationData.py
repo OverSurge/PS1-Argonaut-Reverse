@@ -23,9 +23,9 @@ class AnimationData(BaseBRenderClass):
         return self.header.n_vertices_groups
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        super().parse(raw_data, conf)
-        header = AnimationHeader.parse(raw_data, conf)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        super().parse(data_in, conf)
+        header = AnimationHeader.parse(data_in, conf)
 
         if header.n_total_frames == header.n_stored_frames:
             frame_indexes = list(range(header.n_total_frames))
@@ -38,7 +38,7 @@ class AnimationData(BaseBRenderClass):
         for frame_id in range(header.n_stored_frames):
             last: List[np.ndarray] = []
             for group_id in range(header.n_vertices_groups):
-                sub_frame = [int.from_bytes(raw_data.read(2), 'little', signed=True) for _ in
+                sub_frame = [int.from_bytes(data_in.read(2), 'little', signed=True) for _ in
                              range(header.sub_frame_size // 2)]
                 if header.old_animation_format:
                     matrix = np.divide((sub_frame[:3], sub_frame[3:6], sub_frame[6:9]), 4096).T  # Need to be reversed
@@ -50,6 +50,6 @@ class AnimationData(BaseBRenderClass):
                         frame_indexes.append(sub_frame[7])
                 last.append(np.append(matrix, translation, axis=1))
             if header.n_inter_frames != 0 and frame_id != header.n_stored_frames - 1:
-                raw_data.seek(inter_frames_size, SEEK_CUR)
+                data_in.seek(inter_frames_size, SEEK_CUR)
             frames.append(last)
         return cls(header, frames)

@@ -18,17 +18,17 @@ class ENDSection(BaseWADSection):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration, spsx_section: SPSXSection):
-        size, start = super().parse(raw_data, conf)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, spsx_section: SPSXSection):
+        size, start = super().parse(data_in, conf)
         if size != 0:
             if SPSXFlags.HAS_LEVEL_SOUND_EFFECTS in spsx_section.spsx_flags:
-                spsx_section.level_sound_effects_groups.parse_vags(raw_data, conf)
+                spsx_section.level_sound_effects_groups.parse_vags(data_in, conf)
 
-            raw_data.seek(2048 * math.ceil(raw_data.tell() / 2048))
-            spsx_section.dialogues_bgms.parse_vags(raw_data, conf)
+            data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
+            spsx_section.dialogues_bgms.parse_vags(data_in, conf)
 
             if conf.game == G.HARRY_POTTER_2_PS1:
-                raw_data.seek(2048 * math.ceil(raw_data.tell() / 2048))
+                data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
 
-            cls.check_size(size, start, raw_data.tell())
+            cls.check_size(size, start, data_in.tell())
         return cls(spsx_section)

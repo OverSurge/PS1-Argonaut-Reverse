@@ -156,58 +156,58 @@ class WAD:
     @classmethod
     def parse(cls, file_path_or_data: Union[Path, bytes], conf: Configuration):
         def parse_sections():
-            raw_data.seek(4)
+            data_in.seek(4)
             while True:
-                codename = raw_data.read(4)
+                codename = data_in.read(4)
 
                 # Detects incorrect WADs like FESOUND or FETHUND
                 if len(sections) == 0 and codename != TPSXSection.codename_bytes:
-                    raise SectionNameError(raw_data.tell(), TPSXSection.codename_str, codename.decode('latin1'))
+                    raise SectionNameError(data_in.tell(), TPSXSection.codename_str, codename.decode('latin1'))
 
-                sections[codename.decode('latin1')] = raw_data.tell() - 4
-                raw_data.seek(int.from_bytes(raw_data.read(4), 'little'), SEEK_CUR)
+                sections[codename.decode('latin1')] = data_in.tell() - 4
+                data_in.seek(int.from_bytes(data_in.read(4), 'little'), SEEK_CUR)
                 if codename == ENDSection.codename_bytes:  # ' DNE' (END)
                     break
 
         if isinstance(file_path_or_data, Path):
             with open(file_path_or_data, 'rb') as file:
-                raw_data = BytesIO(file.read())
+                data_in = BytesIO(file.read())
         elif isinstance(file_path_or_data, bytes):
-            raw_data = BytesIO(file_path_or_data)
+            data_in = BytesIO(file_path_or_data)
         else:
             raise TypeError("file_path_or_data should be of type Path or bytes")
         sections: Dict[str, int] = {}
         parse_sections()
 
         if TPSXSection.codename_str in conf.parse_sections:
-            raw_data.seek(sections[TPSXSection.codename_str])
-            tpsx = TPSXSection.parse(raw_data, conf)
+            data_in.seek(sections[TPSXSection.codename_str])
+            tpsx = TPSXSection.parse(data_in, conf)
         else:
             tpsx = None
         if SPSXSection.codename_str in sections.keys() and SPSXSection.codename_str in conf.parse_sections:
-            raw_data.seek(sections[SPSXSection.codename_str])
-            spsx = SPSXSection.parse(raw_data, conf)
+            data_in.seek(sections[SPSXSection.codename_str])
+            spsx = SPSXSection.parse(data_in, conf)
             end = True
         else:
             spsx = None
 
         if DPSXSection.codename_str in conf.parse_sections:
-            raw_data.seek(sections[DPSXSection.codename_str])
-            dpsx = DPSXSection.parse(raw_data, conf)
+            data_in.seek(sections[DPSXSection.codename_str])
+            dpsx = DPSXSection.parse(data_in, conf)
         else:
             dpsx = None
 
         if PORTSection.codename_str in sections.keys() and PORTSection.codename_str in conf.parse_sections:
-            raw_data.seek(sections[PORTSection.codename_str])
-            port = PORTSection.parse(raw_data, conf)
+            data_in.seek(sections[PORTSection.codename_str])
+            port = PORTSection.parse(data_in, conf)
         else:
             port = None
 
         if spsx:
-            raw_data.seek(sections[ENDSection.codename_str])
-            end = ENDSection.parse(raw_data, conf, spsx)
+            data_in.seek(sections[ENDSection.codename_str])
+            end = ENDSection.parse(data_in, conf, spsx)
         else:
             end = None
 
-        raw_data.close()
+        data_in.close()
         return cls(tpsx, spsx, dpsx, port, end)

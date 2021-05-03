@@ -23,7 +23,7 @@ class SoundDescriptor:
         self.flags = flags
         self.size = size
 
-    def parse_vag(self, raw_data: BufferedIOBase, conf: Configuration):
+    def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
         pass
 
 
@@ -37,24 +37,24 @@ class SoundEffectsAmbientDescriptor(SoundDescriptor, BaseBRenderClass):
         self.uk1 = uk1
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        sampling_rate = int.from_bytes(raw_data.read(4), 'little')
-        raw_data.seek(2, SEEK_CUR)  # "Compressed" sampling rate, see SPSX's documentation
-        volume_level = int.from_bytes(raw_data.read(2), 'little')
-        flags = SoundEffectsAmbientFlags(int.from_bytes(raw_data.read(4), 'little'))
-        raw_data.seek(2, SEEK_CUR)
-        uk1 = raw_data.read(2)
-        size = int.from_bytes(raw_data.read(4), 'little')
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        sampling_rate = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(2, SEEK_CUR)  # "Compressed" sampling rate, see SPSX's documentation
+        volume_level = int.from_bytes(data_in.read(2), 'little')
+        flags = SoundEffectsAmbientFlags(int.from_bytes(data_in.read(4), 'little'))
+        data_in.seek(2, SEEK_CUR)
+        uk1 = data_in.read(2)
+        size = int.from_bytes(data_in.read(4), 'little')
         return cls(sampling_rate, volume_level, flags, uk1, size)
 
-    def parse_vag(self, raw_data: BufferedIOBase, conf: Configuration):
-        return VAGSoundData(self.size, raw_data.read(self.size), MONO, self.sampling_rate, conf)
+    def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
+        return VAGSoundData(self.size, data_in.read(self.size), MONO, self.sampling_rate, conf)
 
 
 class SoundEffectsDescriptor(SoundEffectsAmbientDescriptor):
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        res = super().parse(raw_data, conf)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        res = super().parse(data_in, conf)
         assert (res.flags & 0x000000FF).value in cls.known_values_1st_flags_byte
         assert (res.flags & 0x00FFFF00).value in cls.known_values_2nd_2rd_flags_bytes
         assert res.uk1 == b'\x42\x00'
@@ -69,16 +69,16 @@ class DialoguesBGMsDescriptor(SoundDescriptor, BaseBRenderClass):
         self.uk1 = uk1
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        end_section_offset = int.from_bytes(raw_data.read(4), 'little')
-        sampling_rate = (int.from_bytes(raw_data.read(2), 'little') * 44100) // 4096
-        flags = DialoguesBGMsSoundFlags(int.from_bytes(raw_data.read(2), 'little'))
-        uk1 = raw_data.read(4)
-        size = int.from_bytes(raw_data.read(4), 'little')
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        end_section_offset = int.from_bytes(data_in.read(4), 'little')
+        sampling_rate = (int.from_bytes(data_in.read(2), 'little') * 44100) // 4096
+        flags = DialoguesBGMsSoundFlags(int.from_bytes(data_in.read(2), 'little'))
+        uk1 = data_in.read(4)
+        size = int.from_bytes(data_in.read(4), 'little')
         return cls(end_section_offset, sampling_rate, flags, uk1, size)
 
-    def parse_vag(self, raw_data: BufferedIOBase, conf: Configuration):
-        return VAGSoundData(self.size, raw_data.read(self.size),
+    def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
+        return VAGSoundData(self.size, data_in.read(self.size),
                             STEREO if DialoguesBGMsSoundFlags.HAS_INTERLEAVED_STEREO in self.flags else MONO,
                             self.sampling_rate, conf)
 
@@ -103,8 +103,8 @@ class SoundsHolder:  # TODO Change this class to hold one descriptor (merge all 
     def __len__(self):
         return len(self.descriptors)
 
-    def parse_vags(self, raw_data: BufferedIOBase, conf: Configuration):
-        self._vags = [x.parse_vag(raw_data, conf) for x in self.descriptors]
+    def parse_vags(self, data_in: BufferedIOBase, conf: Configuration):
+        self._vags = [x.parse_vag(data_in, conf) for x in self.descriptors]
 
 
 class LevelSoundEffectsGroupDescriptor(BaseBRenderClass):
@@ -120,11 +120,11 @@ class LevelSoundEffectsGroupDescriptor(BaseBRenderClass):
         return self.sounds_holder.size
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        sound_effect_descriptor_offset = int.from_bytes(raw_data.read(4), 'little')
-        n_sound_effects = int.from_bytes(raw_data.read(4), 'little')
-        end_offset = int.from_bytes(raw_data.read(4), 'little')
-        raw_data.seek(4, SEEK_CUR)  # Sum of group VAGs' sizes
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        sound_effect_descriptor_offset = int.from_bytes(data_in.read(4), 'little')
+        n_sound_effects = int.from_bytes(data_in.read(4), 'little')
+        end_offset = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(4, SEEK_CUR)  # Sum of group VAGs' sizes
         return cls(sound_effect_descriptor_offset, n_sound_effects, end_offset)
 
 
@@ -141,16 +141,16 @@ class LevelSoundEffectsGroupsHolder(SoundsHolder):
     def vags(self):
         return [vag for group in self.groups for vag in group.sounds_holder.vags]
 
-    def parse_vags(self, raw_data: BufferedIOBase, conf: Configuration):
+    def parse_vags(self, data_in: BufferedIOBase, conf: Configuration):
         for group in self.groups:
-            raw_data.seek(2048 * math.ceil(raw_data.tell() / 2048))
-            group.sounds_holder.parse_vags(raw_data, conf)
+            data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
+            group.sounds_holder.parse_vags(data_in, conf)
 
 
 class DialoguesBGMsHolder(SoundsHolder):
-    def parse_vags(self, raw_data: BufferedIOBase, conf: Configuration):
+    def parse_vags(self, data_in: BufferedIOBase, conf: Configuration):
         vags = []
         for descriptor in self.descriptors:
-            raw_data.seek(2048 * math.ceil(raw_data.tell() / 2048))
-            vags.append(descriptor.parse_vag(raw_data, conf))
+            data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
+            vags.append(descriptor.parse_vag(data_in, conf))
         self._vags = vags

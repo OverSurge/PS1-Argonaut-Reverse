@@ -8,10 +8,10 @@ from ps1_brender.errors_warnings import SectionNameError, SectionSizeMismatch, U
 
 class BaseBRenderClass:
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
         pass
 
-    def serialize(self, raw_data: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_in: BufferedIOBase, conf: Configuration):
         pass
 
 
@@ -22,10 +22,10 @@ class BaseWADSection(BaseBRenderClass):
     codename_bytes: bytes
 
     @classmethod
-    def check_codename(cls, raw_data: BufferedIOBase):
-        found_codename = raw_data.read(4)
+    def check_codename(cls, data_in: BufferedIOBase):
+        found_codename = data_in.read(4)
         if found_codename != cls.codename_bytes:
-            raise SectionNameError(raw_data.tell(), cls.codename_str, found_codename.decode('latin_1'))
+            raise SectionNameError(data_in.tell(), cls.codename_str, found_codename.decode('latin_1'))
 
     @classmethod
     def check_size(cls, expected_size: int, section_start: int, current_position: int):
@@ -34,14 +34,14 @@ class BaseWADSection(BaseBRenderClass):
             raise SectionSizeMismatch(current_position, cls.codename_str, expected_size, calculated_size)
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
         if conf.game not in cls.supported_games:
             raise UnsupportedParsing(cls.section_content_description)
-        cls.check_codename(raw_data)
-        return int.from_bytes(raw_data.read(4), 'little'), raw_data.tell()
+        cls.check_codename(data_in)
+        return int.from_bytes(data_in.read(4), 'little'), data_in.tell()
 
-    def serialize(self, raw_data: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_in: BufferedIOBase, conf: Configuration):
         if conf.game not in self.supported_games:
             raise UnsupportedSerialization(self.section_content_description)
-        raw_data.write(b'\x00\x00\x00\x00')  # Section's size
-        return raw_data.tell() - 4
+        data_in.write(b'\x00\x00\x00\x00')  # Section's size
+        return data_in.tell() - 4

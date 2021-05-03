@@ -26,8 +26,8 @@ class VAGSoundData(BaseBRenderClass):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration, size: int, channels: int, sampling_rate: int):
-        return cls(size, raw_data.read(size), channels, sampling_rate, conf)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, size: int, channels: int, sampling_rate: int):
+        return cls(size, data_in.read(size), channels, sampling_rate, conf)
 
     def to_vag(self, with_headers: bool = True):
         header_size = 0 if with_headers else 48

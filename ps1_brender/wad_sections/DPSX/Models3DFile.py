@@ -15,10 +15,10 @@ class Models3DFile(BaseBRenderClass):
         return self.models[item]
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        super().parse(raw_data, conf)
-        n_models = int.from_bytes(raw_data.read(4), 'little')
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        super().parse(data_in, conf)
+        n_models = int.from_bytes(data_in.read(4), 'little')
         models: List[Model3DData] = []
         for model_id in range(n_models):
-            models.append(Model3DData.parse(raw_data, conf))
+            models.append(Model3DData.parse(data_in, conf))
         return cls(n_models, models)

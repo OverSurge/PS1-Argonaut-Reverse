@@ -22,26 +22,26 @@ class DPSXSection(BaseWADSection):
         self.level_file = level_file
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        size, start = super().parse(raw_data, conf)
-        idk1 = raw_data.read(4)
-        n_idk_unique_textures = int.from_bytes(raw_data.read(4), 'little')
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        size, start = super().parse(data_in, conf)
+        idk1 = data_in.read(4)
+        n_idk_unique_textures = int.from_bytes(data_in.read(4), 'little')
 
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
-            raw_data.seek(2048, SEEK_CUR)
+            data_in.seek(2048, SEEK_CUR)
         else:
-            raw_data.seek(2052, SEEK_CUR)
+            data_in.seek(2052, SEEK_CUR)
 
-        models_3d_file = Models3DFile.parse(raw_data, conf)
-        animations_file = AnimationsFile.parse(raw_data, conf)
+        models_3d_file = Models3DFile.parse(data_in, conf)
+        animations_file = AnimationsFile.parse(data_in, conf)
 
         if conf.game in (G.CROC_2_PS1, G.CROC_2_DEMO_PS1):
-            n_dpsx_legacy_textures = int.from_bytes(raw_data.read(4), 'little')
-            raw_data.seek(n_dpsx_legacy_textures * 3072, SEEK_CUR)
+            n_dpsx_legacy_textures = int.from_bytes(data_in.read(4), 'little')
+            data_in.seek(n_dpsx_legacy_textures * 3072, SEEK_CUR)
 
-        strategies_file = StrategiesFile.parse(raw_data, conf)
-        level_file = LevelFile.parse(raw_data, conf)
+        strategies_file = StrategiesFile.parse(data_in, conf)
+        level_file = LevelFile.parse(data_in, conf)
 
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:  # FIXME End of Croc 2 Demo Dummies' level files aren't reversed yet
-            cls.check_size(size, start, raw_data.tell())
+            cls.check_size(size, start, data_in.tell())
         return cls(models_3d_file, animations_file, strategies_file, level_file)

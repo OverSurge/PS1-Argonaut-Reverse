@@ -13,41 +13,41 @@ class LevelFile(BaseBRenderClass):
         self.chunks_matrix = chunks_matrix
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        super().parse(raw_data, conf)
-        n_chunk_models = int.from_bytes(raw_data.read(4), 'little')
-        _chunk_model_headers = [Model3DHeader.parse(raw_data, conf) for _ in range(n_chunk_models)]
-        chunk_models = [LevelGeom3DData.parse(raw_data, conf, _chunk_model_headers[i]) for i in range(n_chunk_models)]
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        super().parse(data_in, conf)
+        n_chunk_models = int.from_bytes(data_in.read(4), 'little')
+        _chunk_model_headers = [Model3DHeader.parse(data_in, conf) for _ in range(n_chunk_models)]
+        chunk_models = [LevelGeom3DData.parse(data_in, conf, _chunk_model_headers[i]) for i in range(n_chunk_models)]
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
-            raw_data.seek(8, SEEK_CUR)
-        n_sub_chunks = int.from_bytes(raw_data.read(4), 'little')
+            data_in.seek(8, SEEK_CUR)
+        n_sub_chunks = int.from_bytes(data_in.read(4), 'little')
 
-        n_idk1 = int.from_bytes(raw_data.read(4), 'little')
-        raw_data.seek(4 * n_idk1, SEEK_CUR)
-        assert n_sub_chunks == int.from_bytes(raw_data.read(4), 'little')
-        n_actors_instances = int.from_bytes(raw_data.read(2), 'little')
-        raw_data.seek(6 if conf.game != G.CROC_2_DEMO_PS1_DUMMY else 2, SEEK_CUR)
-        n_total_chunks = int.from_bytes(raw_data.read(4), 'little')
-        n_chunk_columns = int.from_bytes(raw_data.read(4), 'little')
-        n_chunk_rows = int.from_bytes(raw_data.read(4), 'little')
+        n_idk1 = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(4 * n_idk1, SEEK_CUR)
+        assert n_sub_chunks == int.from_bytes(data_in.read(4), 'little')
+        n_actors_instances = int.from_bytes(data_in.read(2), 'little')
+        data_in.seek(6 if conf.game != G.CROC_2_DEMO_PS1_DUMMY else 2, SEEK_CUR)
+        n_total_chunks = int.from_bytes(data_in.read(4), 'little')
+        n_chunk_columns = int.from_bytes(data_in.read(4), 'little')
+        n_chunk_rows = int.from_bytes(data_in.read(4), 'little')
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
-            n_lighting_headers = int.from_bytes(raw_data.read(2), 'little')
-            n_add_sub_chunks_lighting = int.from_bytes(raw_data.read(2), 'little')
-            idk3 = int.from_bytes(raw_data.read(4), 'little')
+            n_lighting_headers = int.from_bytes(data_in.read(2), 'little')
+            n_add_sub_chunks_lighting = int.from_bytes(data_in.read(2), 'little')
+            idk3 = int.from_bytes(data_in.read(4), 'little')
         else:
             n_lighting_headers, n_add_sub_chunks_lighting = None, None
-        n_idk4 = int.from_bytes(raw_data.read(4), 'little')
-        raw_data.seek(116 if conf.game != G.CROC_2_DEMO_PS1_DUMMY else 80, SEEK_CUR)
+        n_idk4 = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(116 if conf.game != G.CROC_2_DEMO_PS1_DUMMY else 80, SEEK_CUR)
 
         _chunks_matrix: List[Union[List[int], Optional[int]]] = \
-            [int.from_bytes(raw_data.read(4), 'little') for _ in range(n_total_chunks)]
+            [int.from_bytes(data_in.read(4), 'little') for _ in range(n_total_chunks)]
         _sub_chunks_height = {}
-        chunks_info_start_offset = raw_data.tell()
+        chunks_info_start_offset = data_in.tell()
 
         def parse_chunks_info(offset: int, chunks_ids_list: List[int]):
-            raw_data.seek(chunks_info_start_offset + offset)
-            chunks_ids_list.append(int.from_bytes(raw_data.read(4), 'little'))
-            linked_chunk_offset = int.from_bytes(raw_data.read(4), 'little')
+            data_in.seek(chunks_info_start_offset + offset)
+            chunks_ids_list.append(int.from_bytes(data_in.read(4), 'little'))
+            linked_chunk_offset = int.from_bytes(data_in.read(4), 'little')
             if linked_chunk_offset != 0xFFFFFFFF:
                 return parse_chunks_info(linked_chunk_offset, chunks_ids_list)
             else:
@@ -65,88 +65,88 @@ class LevelFile(BaseBRenderClass):
                 else:
                     _chunks_matrix[index] = None
 
-        raw_data.seek(chunks_info_start_offset + 8 * n_sub_chunks)
+        data_in.seek(chunks_info_start_offset + 8 * n_sub_chunks)
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
-            header256bytes = raw_data.read(256)
-            n_zone_ids = int.from_bytes(raw_data.read(4), 'little')
-            zone_ids = [int.from_bytes(raw_data.read(4), 'little') for _ in range(n_zone_ids)]
+            header256bytes = data_in.read(256)
+            n_zone_ids = int.from_bytes(data_in.read(4), 'little')
+            zone_ids = [int.from_bytes(data_in.read(4), 'little') for _ in range(n_zone_ids)]
             assert n_zone_ids == n_total_chunks
 
-            if raw_data.read(4) == b'fvw\x00':
-                fvw_data = [raw_data.read(2) for _ in range(n_total_chunks)]
+            if data_in.read(4) == b'fvw\x00':
+                fvw_data = [data_in.read(2) for _ in range(n_total_chunks)]
             else:
                 fvw_data = None
-                raw_data.seek(-4, SEEK_CUR)
+                data_in.seek(-4, SEEK_CUR)
         else:
             zone_ids = None
             fvw_data = None
 
         _sub_chunks_rotation = {}
         for i in range(n_sub_chunks):
-            rotation = int.from_bytes(raw_data.read(4), 'big')
+            rotation = int.from_bytes(data_in.read(4), 'big')
             assert rotation in (0, 4, 8, 12)
             _sub_chunks_rotation[i] = ChunkRotation(rotation)
-            assert raw_data.read(4) == b'\x00\x00\x00\x00'
-            x = int.from_bytes(raw_data.read(4), 'little')
-            y = int.from_bytes(raw_data.read(4), 'little')
-            z = int.from_bytes(raw_data.read(4), 'little')
-            assert raw_data.read(4) == b'\x00\x00\x00\x00'
+            assert data_in.read(4) == b'\x00\x00\x00\x00'
+            x = int.from_bytes(data_in.read(4), 'little')
+            y = int.from_bytes(data_in.read(4), 'little')
+            z = int.from_bytes(data_in.read(4), 'little')
+            assert data_in.read(4) == b'\x00\x00\x00\x00'
             assert x == 2048 + 4096 * _sub_chunks_height[i][1]  # Chunks are 4096-large, so +2048 for the chunk's center
             assert z == 2048 + 4096 * _sub_chunks_height[i][0]
             _sub_chunks_height[i] = y
-        chunks_models_mapping = [int.from_bytes(raw_data.read(4), 'little') for _ in range(n_sub_chunks)]
+        chunks_models_mapping = [int.from_bytes(data_in.read(4), 'little') for _ in range(n_sub_chunks)]
 
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
-            lighting_headers = [raw_data.read(84) for _ in range(n_lighting_headers)]
+            lighting_headers = [data_in.read(84) for _ in range(n_lighting_headers)]
 
-        idk_4 = [raw_data.read(36) for _ in range(n_idk4)]
+        idk_4 = [data_in.read(36) for _ in range(n_idk4)]
 
         for i in range(n_actors_instances):
-            raw_data.seek(24, SEEK_CUR)
-            actor_offset = int.from_bytes(raw_data.read(4), 'little')
-            raw_data.seek(32, SEEK_CUR)
-            actor_sound_level = int.from_bytes(raw_data.read(4), 'little')
+            data_in.seek(24, SEEK_CUR)
+            actor_offset = int.from_bytes(data_in.read(4), 'little')
+            data_in.seek(32, SEEK_CUR)
+            actor_sound_level = int.from_bytes(data_in.read(4), 'little')
 
         if conf.game not in (G.CROC_2_DEMO_PS1, G.CROC_2_DEMO_PS1_DUMMY):
             add_models_mapping = []
             for i in range(n_add_sub_chunks_lighting):
-                raw_data.seek(16, SEEK_CUR)
-                add_models_mapping.append(int.from_bytes(raw_data.read(4), 'little'))
-                raw_data.seek(4, SEEK_CUR)
+                data_in.seek(16, SEEK_CUR)
+                add_models_mapping.append(int.from_bytes(data_in.read(4), 'little'))
+                data_in.seek(4, SEEK_CUR)
 
-            n_idk2 = int.from_bytes(raw_data.read(4), 'little')
-            raw_data.seek(32 * n_idk2, SEEK_CUR)  # TODO Reverse this
+            n_idk2 = int.from_bytes(data_in.read(4), 'little')
+            data_in.seek(32 * n_idk2, SEEK_CUR)  # TODO Reverse this
         else:
             add_models_mapping = None
-            raw_data.seek(32 * n_sub_chunks, SEEK_CUR)  # Two different 32-bytes long structures
-            raw_data.seek(32 * n_sub_chunks, SEEK_CUR)
-            raw_data.seek(32 if conf.game == G.CROC_2_DEMO_PS1 else 92, SEEK_CUR)
+            data_in.seek(32 * n_sub_chunks, SEEK_CUR)  # Two different 32-bytes long structures
+            data_in.seek(32 * n_sub_chunks, SEEK_CUR)
+            data_in.seek(32 if conf.game == G.CROC_2_DEMO_PS1 else 92, SEEK_CUR)
 
         if conf.game == G.CROC_2_PS1:
-            raw_data.seek(30732, SEEK_CUR)
+            data_in.seek(30732, SEEK_CUR)
         elif conf.game != G.CROC_2_DEMO_PS1_DUMMY and n_sub_chunks != 0:
-            sub_chunks_n_lighting = [int.from_bytes(raw_data.read(4), 'little') for _ in range(n_sub_chunks)]
-            sub_chunks_n_add_lighting = [int.from_bytes(raw_data.read(4), 'little') for _ in
+            sub_chunks_n_lighting = [int.from_bytes(data_in.read(4), 'little') for _ in range(n_sub_chunks)]
+            sub_chunks_n_add_lighting = [int.from_bytes(data_in.read(4), 'little') for _ in
                                          range(n_add_sub_chunks_lighting)]
             for model_id in range(n_sub_chunks):
                 for i in range(sub_chunks_n_lighting[model_id]):
                     size = 4 * chunk_models[chunks_models_mapping[model_id]].n_vertices
-                    raw_data.seek(size, SEEK_CUR)
+                    data_in.seek(size, SEEK_CUR)
             for model_id in range(n_add_sub_chunks_lighting):
                 for i in range(sub_chunks_n_add_lighting[model_id]):
                     size = 4 * chunk_models[add_models_mapping[model_id]].n_vertices
-                    raw_data.seek(size, SEEK_CUR)
+                    data_in.seek(size, SEEK_CUR)
             if conf.game != G.CROC_2_DEMO_PS1:  # Not present in Croc 2 Demo Dummy
-                idk_size = int.from_bytes(raw_data.read(4), 'little')
+                idk_size = int.from_bytes(data_in.read(4), 'little')
                 if idk_size != 0:
-                    raw_data.seek(4 + idk_size, SEEK_CUR)
+                    data_in.seek(4 + idk_size, SEEK_CUR)
                 else:
-                    raw_data.seek(-4, SEEK_CUR)
-                n_idk3 = int.from_bytes(raw_data.read(4), 'little')
+                    data_in.seek(-4, SEEK_CUR)
+                n_idk3 = int.from_bytes(data_in.read(4), 'little')
                 if n_idk3 == 0:
-                    raw_data.seek(-4, SEEK_CUR)
-                idk3 = [int.from_bytes(raw_data.read(40), 'little') for _ in range(n_idk3)]
-            raw_data.seek(12, SEEK_CUR)
+                    data_in.seek(-4, SEEK_CUR)
+                idk3 = [int.from_bytes(data_in.read(40), 'little') for _ in range(n_idk3)]
+            data_in.seek(12, SEEK_CUR)
 
         chunks_holders = []
         for i in range(n_total_chunks):

@@ -11,8 +11,8 @@ class StrategiesFile(BaseBRenderClass):
         self.strategies = strategies
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        super().parse(raw_data, conf)
-        n_strategies = int.from_bytes(raw_data.read(4), 'little')
-        strategies = [StrategyData.parse(raw_data, conf) for _ in range(n_strategies)]
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        super().parse(data_in, conf)
+        n_strategies = int.from_bytes(data_in.read(4), 'little')
+        strategies = [StrategyData.parse(data_in, conf) for _ in range(n_strategies)]
         return cls(strategies)

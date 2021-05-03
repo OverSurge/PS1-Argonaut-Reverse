@@ -24,36 +24,36 @@ class AnimationHeader(BaseBRenderClass):
         self.sub_frame_size = 24 if old_animation_format else 16
 
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        super().parse(raw_data, conf)
-        n_flags: int = int.from_bytes(raw_data.read(4), 'little')
-        raw_data.seek(4, SEEK_CUR)
-        n_total_frames: int = int.from_bytes(raw_data.read(4), 'little')
-        has_additional_frame_data_value = int.from_bytes(raw_data.read(4), 'little')
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        super().parse(data_in, conf)
+        n_flags: int = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(4, SEEK_CUR)
+        n_total_frames: int = int.from_bytes(data_in.read(4), 'little')
+        has_additional_frame_data_value = int.from_bytes(data_in.read(4), 'little')
         has_additional_data: bool = has_additional_frame_data_value == 0
         n_stored_frames = 0
         if conf.game in (G.CROC_2_PS1, G.CROC_2_DEMO_PS1, G.CROC_2_DEMO_PS1_DUMMY):
-            n_inter_frames = int.from_bytes(raw_data.read(4), 'little')
+            n_inter_frames = int.from_bytes(data_in.read(4), 'little')
             if n_inter_frames != 0:
                 n_stored_frames = n_total_frames
-            raw_data.seek(4, SEEK_CUR)
+            data_in.seek(4, SEEK_CUR)
         else:  # Harry Potter 1 & 2
-            raw_data.seek(8, SEEK_CUR)
+            data_in.seek(8, SEEK_CUR)
             n_inter_frames = 0
-        n_vertex_groups: int = int.from_bytes(raw_data.read(4), 'little')
-        raw_data.seek(4, SEEK_CUR)
+        n_vertex_groups: int = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(4, SEEK_CUR)
 
         if conf.game in (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1):
-            n_stored_frames = int.from_bytes(raw_data.read(4), 'little')
-            raw_data.seek(12, SEEK_CUR)
+            n_stored_frames = int.from_bytes(data_in.read(4), 'little')
+            data_in.seek(12, SEEK_CUR)
 
-        flags = [raw_data.read(4) for _ in range(n_flags)]
+        flags = [data_in.read(4) for _ in range(n_flags)]
         if has_additional_data:
-            raw_data.seek(8 * n_total_frames, SEEK_CUR)
-        raw_data.seek(4 * n_total_frames, SEEK_CUR)  # Total frames info
-        raw_data.seek(n_inter_frames * cls.inter_frames_header_size, SEEK_CUR)  # Inter-frames header
+            data_in.seek(8 * n_total_frames, SEEK_CUR)
+        data_in.seek(4 * n_total_frames, SEEK_CUR)  # Total frames info
+        data_in.seek(n_inter_frames * cls.inter_frames_header_size, SEEK_CUR)  # Inter-frames header
         if conf.game in (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1) or n_inter_frames != 0:
-            raw_data.seek(4 * n_stored_frames, SEEK_CUR)  # Stored frames info
+            data_in.seek(4 * n_stored_frames, SEEK_CUR)  # Stored frames info
 
         if n_stored_frames == 0 or n_inter_frames != 0:  # Rotation matrices
             old_animation_format = True
@@ -67,6 +67,6 @@ class AnimationHeader(BaseBRenderClass):
                     f"Too much frames in animation (or no frame): {n_total_frames} frames."
                     f"It is most probably caused by an inaccuracy in my reverse engineering of the textures format.")
             else:
-                raise AnimationsWarning(raw_data.tell(), n_total_frames)
+                raise AnimationsWarning(data_in.tell(), n_total_frames)
         return cls(n_total_frames, n_stored_frames, n_vertex_groups, n_flags, has_additional_data, flags,
                    old_animation_format, n_inter_frames)

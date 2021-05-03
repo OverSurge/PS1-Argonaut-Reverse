@@ -25,13 +25,13 @@ class TextureFile(BaseBRenderClass):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration, end: int, has_legacy_textures: bool):
-        super().parse(raw_data, conf)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, end: int, has_legacy_textures: bool):
+        super().parse(data_in, conf)
         rle = conf.game in (G.CROC_2_PS1, G.CROC_2_DEMO_PS1, G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
 
         textures: List[TextureData] = []
-        n_textures: int = int.from_bytes(raw_data.read(4), 'little')
-        n_rows: int = int.from_bytes(raw_data.read(4), 'little')
+        n_textures: int = int.from_bytes(data_in.read(4), 'little')
+        n_rows: int = int.from_bytes(data_in.read(4), 'little')
 
         if n_textures > 4000 or 0 > n_rows > 4:
             if conf.ignore_warnings:
@@ -39,35 +39,35 @@ class TextureFile(BaseBRenderClass):
                     f"Too much textures ({n_textures}, or incorrect row count {n_rows}."
                     f"It is most probably caused by an inaccuracy in my reverse engineering of the textures format.")
             else:
-                raise TexturesWarning(raw_data.tell(), n_textures, n_rows)
+                raise TexturesWarning(data_in.tell(), n_textures, n_rows)
 
         # In Harry Potter, the last 16 textures are empty (full of 00 bytes)
         n_stored_textures = n_textures - 16 if conf.game in (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1) else n_textures
         for texture_id in range(n_stored_textures):
-            textures.append(TextureData(raw_data, conf))
+            textures.append(TextureData(data_in, conf))
         if conf.game in (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1):
-            raw_data.seek(192, SEEK_CUR)  # 16 textures x 12 bytes
-        n_idk_yet_1 = int.from_bytes(raw_data.read(4), 'little')
-        n_idk_yet_2 = int.from_bytes(raw_data.read(4), 'little')
-        raw_data.seek(n_idk_yet_1 * cls.image_header_size, SEEK_CUR)
+            data_in.seek(192, SEEK_CUR)  # 16 textures x 12 bytes
+        n_idk_yet_1 = int.from_bytes(data_in.read(4), 'little')
+        n_idk_yet_2 = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(n_idk_yet_1 * cls.image_header_size, SEEK_CUR)
 
         if has_legacy_textures:  # Patch for legacy textures, see Textures documentation
-            raw_data.seek(15360, SEEK_CUR)
+            data_in.seek(15360, SEEK_CUR)
         if rle:
             raw = bytearray()
-            while raw_data.tell() < end:
-                run = int.from_bytes(raw_data.read(cls.rle_size), 'little', signed=True)
+            while data_in.tell() < end:
+                run = int.from_bytes(data_in.read(cls.rle_size), 'little', signed=True)
                 if run < 0:
-                    raw += raw_data.read(cls.rle_size) * abs(run)
+                    raw += data_in.read(cls.rle_size) * abs(run)
                 elif run > 0:
-                    raw += raw_data.read(cls.rle_size * run)
+                    raw += data_in.read(cls.rle_size * run)
                 else:
-                    raise ZeroRunLengthError(raw_data.tell())
+                    raise ZeroRunLengthError(data_in.tell())
             raw_texture = bytes(raw)
             if conf.game == G.CROC_2_DEMO_PS1:  # Patch for Croc 2 Demo (non-dummy) last end offset error
-                raw_data.seek(-2, SEEK_CUR)
+                data_in.seek(-2, SEEK_CUR)
         else:
-            raw_texture: bytes = raw_data.read(n_rows * 131072)
+            raw_texture: bytes = data_in.read(n_rows * 131072)
 
         return cls(has_legacy_textures, textures, n_textures, n_rows, raw_texture)
 

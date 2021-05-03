@@ -29,19 +29,19 @@ class PORTSection(BaseWADSection):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        size, start = super().parse(raw_data, conf)
-        n_zones = int.from_bytes(raw_data.read(4), 'little')
-        n_idk1 = int.from_bytes(raw_data.read(4), 'little')
-        idk1 = [raw_data.read(32) for _ in range(n_idk1)]
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        size, start = super().parse(data_in, conf)
+        n_zones = int.from_bytes(data_in.read(4), 'little')
+        n_idk1 = int.from_bytes(data_in.read(4), 'little')
+        idk1 = [data_in.read(32) for _ in range(n_idk1)]
         n_chunks_per_zone = []
         for _ in range(n_zones):
-            raw_data.seek(2, SEEK_CUR)
-            n_chunks_per_zone.append(raw_data.read(1)[0])
-            raw_data.seek(9, SEEK_CUR)
+            data_in.seek(2, SEEK_CUR)
+            n_chunks_per_zone.append(data_in.read(1)[0])
+            data_in.seek(9, SEEK_CUR)
         chunks_zones = []
         for n_chunks in n_chunks_per_zone:
-            chunks_zones.append([int.from_bytes(raw_data.read(2), 'little') for _ in range(n_chunks)])
+            chunks_zones.append([int.from_bytes(data_in.read(2), 'little') for _ in range(n_chunks)])
 
-        cls.check_size(size, start, raw_data.tell())
+        cls.check_size(size, start, data_in.tell())
         return cls(idk1, chunks_zones)

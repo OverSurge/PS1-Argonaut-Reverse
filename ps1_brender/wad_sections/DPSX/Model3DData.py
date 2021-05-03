@@ -46,23 +46,23 @@ class BaseModel3DData(BaseBRenderClass):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration, header: Model3DHeader, is_world_model_3d: bool):
-        super().parse(raw_data, conf)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, header: Model3DHeader, is_world_model_3d: bool):
+        super().parse(data_in, conf)
 
         def parse_vertices_normals(mode: int):
             res = []
             group = []
             for i in range(header.n_vertices):
                 # Vertices
-                xyzi = (int.from_bytes(raw_data.read(2), 'little', signed=True),
-                        int.from_bytes(raw_data.read(2), 'little', signed=True),
-                        int.from_bytes(raw_data.read(2), 'little', signed=True),
-                        int.from_bytes(raw_data.read(2), 'little'))
+                xyzi = (int.from_bytes(data_in.read(2), 'little', signed=True),
+                        int.from_bytes(data_in.read(2), 'little', signed=True),
+                        int.from_bytes(data_in.read(2), 'little', signed=True),
+                        int.from_bytes(data_in.read(2), 'little'))
                 group.append(xyzi[:3])
                 if xyzi[3] < 1:
                     error_cause = \
                         NegativeIndexError.CAUSE_VERTEX if mode == 0 else NegativeIndexError.CAUSE_VERTEX_NORMAL
-                    raise NegativeIndexError(raw_data.tell(), error_cause, xyzi[3], xyzi)
+                    raise NegativeIndexError(data_in.tell(), error_cause, xyzi[3], xyzi)
                 elif xyzi[3] == 1:
                     res.append(np.array(group, dtype=np.int16))
                     group = []
@@ -76,7 +76,7 @@ class BaseModel3DData(BaseBRenderClass):
         if not (is_world_model_3d and conf.game in (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)):
             normals, n_normals_groups = parse_vertices_normals(1)
             if n_vertices_groups != n_normals_groups:
-                raise VerticesNormalsGroupsMismatch(n_vertices_groups, n_normals_groups, raw_data.tell())
+                raise VerticesNormalsGroupsMismatch(n_vertices_groups, n_normals_groups, data_in.tell())
 
         # Faces
         quads = []
@@ -85,13 +85,13 @@ class BaseModel3DData(BaseBRenderClass):
         faces_texture_ids: List[int] = []
         if conf.game == G.CROC_2_DEMO_PS1_DUMMY or not is_world_model_3d:  # Large face headers (Actors' models)
             for face_id in range(header.n_faces):
-                raw_face_data = (int.from_bytes(raw_data.read(2), 'little', signed=True),
-                                 int.from_bytes(raw_data.read(2), 'little', signed=True),
-                                 int.from_bytes(raw_data.read(2), 'little', signed=True),
-                                 int.from_bytes(raw_data.read(2), 'little'), int.from_bytes(raw_data.read(2), 'little'),
-                                 int.from_bytes(raw_data.read(2), 'little'), int.from_bytes(raw_data.read(2), 'little'),
-                                 int.from_bytes(raw_data.read(2), 'little'), int.from_bytes(raw_data.read(2), 'little'),
-                                 int.from_bytes(raw_data.read(2), 'little'))
+                raw_face_data = (int.from_bytes(data_in.read(2), 'little', signed=True),
+                                 int.from_bytes(data_in.read(2), 'little', signed=True),
+                                 int.from_bytes(data_in.read(2), 'little', signed=True),
+                                 int.from_bytes(data_in.read(2), 'little'), int.from_bytes(data_in.read(2), 'little'),
+                                 int.from_bytes(data_in.read(2), 'little'), int.from_bytes(data_in.read(2), 'little'),
+                                 int.from_bytes(data_in.read(2), 'little'), int.from_bytes(data_in.read(2), 'little'),
+                                 int.from_bytes(data_in.read(2), 'little'))
                 if raw_face_data[9] & 0x0800:  # 1st vertex, then 2nd, 4th and 3rd, except in Croc 2 Demo Dummy WADs
                     if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
                         # FIXME
@@ -104,13 +104,13 @@ class BaseModel3DData(BaseBRenderClass):
                 faces_normals.append(raw_face_data[:3])
                 faces_texture_ids.append(raw_face_data[8])
                 if raw_face_data[3] < 1:
-                    raise NegativeIndexError(raw_data.tell(), NegativeIndexError.CAUSE_FACE, raw_face_data[3],
+                    raise NegativeIndexError(data_in.tell(), NegativeIndexError.CAUSE_FACE, raw_face_data[3],
                                              raw_face_data)
         else:  # Small face headers (Subchunks' models)
             for face_id in range(header.n_faces):
-                raw_face_data = (int.from_bytes(raw_data.read(2), 'little'), int.from_bytes(raw_data.read(2), 'little'),
-                                 int.from_bytes(raw_data.read(2), 'little'), int.from_bytes(raw_data.read(2), 'little'),
-                                 int.from_bytes(raw_data.read(2), 'little'), int.from_bytes(raw_data.read(2), 'little'))
+                raw_face_data = (int.from_bytes(data_in.read(2), 'little'), int.from_bytes(data_in.read(2), 'little'),
+                                 int.from_bytes(data_in.read(2), 'little'), int.from_bytes(data_in.read(2), 'little'),
+                                 int.from_bytes(data_in.read(2), 'little'), int.from_bytes(data_in.read(2), 'little'))
                 if raw_face_data[5] & 0x0800:
                     quads.append((raw_face_data[0], raw_face_data[1], raw_face_data[2], raw_face_data[3]))
                 else:
@@ -124,7 +124,7 @@ class BaseModel3DData(BaseBRenderClass):
             bounding_box_info_size = 44
         else:  # Harry Potter 1 & 2
             bounding_box_info_size = 32
-        raw_data.seek(header.n_bounding_box_info * bounding_box_info_size, SEEK_CUR)
+        data_in.seek(header.n_bounding_box_info * bounding_box_info_size, SEEK_CUR)
         return cls(header, is_world_model_3d, vertices, normals, quads, tris, faces_normals, faces_texture_ids,
                    n_vertices_groups)
 
@@ -204,13 +204,13 @@ class BaseModel3DData(BaseBRenderClass):
 class Model3DData(BaseModel3DData):
     # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
-        header = Model3DHeader.parse(raw_data, conf)
-        return super().parse(raw_data, conf, header, False)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        header = Model3DHeader.parse(data_in, conf)
+        return super().parse(data_in, conf, header, False)
 
 
 class LevelGeom3DData(BaseModel3DData):
     # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, raw_data: BufferedIOBase, conf: Configuration, header: Model3DHeader):
-        return super().parse(raw_data, conf, header, True)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, header: Model3DHeader):
+        return super().parse(data_in, conf, header, True)
