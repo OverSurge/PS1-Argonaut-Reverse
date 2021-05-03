@@ -2,7 +2,8 @@ from io import BufferedIOBase
 from typing import Tuple
 
 from ps1_brender.configuration import Configuration, G
-from ps1_brender.errors_warnings import SectionNameError, SectionSizeMismatch, UnsupportedReverse
+from ps1_brender.errors_warnings import SectionNameError, SectionSizeMismatch, UnsupportedParsing, \
+    UnsupportedSerialization
 
 
 class BaseBRenderClass:
@@ -10,8 +11,7 @@ class BaseBRenderClass:
     def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
         pass
 
-    @classmethod
-    def serialize(cls):
+    def serialize(self, raw_data: BufferedIOBase, conf: Configuration):
         pass
 
 
@@ -20,9 +20,6 @@ class BaseWADSection(BaseBRenderClass):
     section_content_description: str
     codename_str: str
     codename_bytes: bytes
-
-    def __init__(self, size: int):
-        self.size = size
 
     @classmethod
     def check_codename(cls, raw_data: BufferedIOBase):
@@ -39,6 +36,12 @@ class BaseWADSection(BaseBRenderClass):
     @classmethod
     def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
         if conf.game not in cls.supported_games:
-            raise UnsupportedReverse(cls.section_content_description)
+            raise UnsupportedParsing(cls.section_content_description)
         cls.check_codename(raw_data)
         return int.from_bytes(raw_data.read(4), 'little'), raw_data.tell()
+
+    def serialize(self, raw_data: BufferedIOBase, conf: Configuration):
+        if conf.game not in self.supported_games:
+            raise UnsupportedSerialization(self.section_content_description)
+        raw_data.write(b'\x00\x00\x00\x00')  # Section's size
+        return raw_data.tell() - 4

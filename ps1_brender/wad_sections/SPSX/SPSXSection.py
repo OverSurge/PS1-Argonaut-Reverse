@@ -16,15 +16,52 @@ class SPSXSection(BaseWADSection):
     supported_games = (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
     section_content_description = "sound effects, background music & dialogues"
 
-    def __init__(self, size: int, spsx_flags: SPSXFlags, common_sound_effects: SoundsHolder,
+    def __init__(self, spsx_flags: SPSXFlags, common_sound_effects: SoundsHolder,
                  ambient_tracks: SoundsHolder, level_sound_effects_groups: LevelSoundEffectsGroupsHolder,
-                 dialogues_bgms: DialoguesBGMsHolder):
-        super().__init__(size)
+                 idk1: int, idk2: int, n_ff_groups: int, dialogues_bgms: DialoguesBGMsHolder):
         self.spsx_flags = spsx_flags
         self.common_sound_effects = common_sound_effects
         self.ambient_tracks = ambient_tracks
         self.level_sound_effects_groups = level_sound_effects_groups
+        self.n_ff_groups = n_ff_groups
         self.dialogues_bgms = dialogues_bgms
+
+    @property
+    def size(self):
+        return 8 + 20 * self.n_common_sound_effects + 4 * (SPSXFlags.HAS_AMBIENT_TRACKS in self.spsx_flags) + \
+               20 * self.n_ambient_tracks + 16 * (SPSXFlags.HAS_LEVEL_SOUND_EFFECTS in self.spsx_flags) + \
+               16 * self.n_level_sound_effects_groups + 20 * self.n_level_sound_effects + 16 * self.n_ff_groups + 4 + \
+               8 * (SPSXFlags.HAS_COMMON_SOUND_EFFECTS in self.spsx_flags) + 16 * self.n_dialogues_bgms + \
+               self.common_sound_effects_size + 4 * (SPSXFlags.HAS_AMBIENT_TRACKS in self.spsx_flags) + \
+               self.ambient_tracks_size
+
+    @property
+    def n_common_sound_effects(self):
+        return len(self.common_sound_effects)
+
+    @property
+    def common_sound_effects_size(self):
+        return self.common_sound_effects.size
+
+    @property
+    def n_ambient_tracks(self):
+        return len(self.ambient_tracks)
+
+    @property
+    def ambient_tracks_size(self):
+        return self.ambient_tracks.size
+
+    @property
+    def n_level_sound_effects_groups(self):
+        return len(self.level_sound_effects_groups.groups)
+
+    @property
+    def n_level_sound_effects(self):
+        return len(self.level_sound_effects_groups)
+
+    @property
+    def n_dialogues_bgms(self):
+        return len(self.dialogues_bgms)
 
     @property
     def dialogues_bgms_total_size(self):
@@ -62,11 +99,12 @@ class SPSXSection(BaseWADSection):
         # Level sound effects groups
         idk1 = None
         idk2 = None
+        n_ff_groups = 0
         level_sound_effects_groups: Optional[LevelSoundEffectsGroupsHolder] = None
         if SPSXFlags.HAS_LEVEL_SOUND_EFFECTS in spsx_flags:
             n_level_sound_effects_groups = int.from_bytes(raw_data.read(4), 'little')
-            idk1 = raw_data.read(4)
-            idk2 = raw_data.read(4)
+            idk1 = int.from_bytes(raw_data.read(4), 'little')
+            idk2 = int.from_bytes(raw_data.read(4), 'little')
             n_ff_groups = int.from_bytes(raw_data.read(4), 'little')
             level_sound_effects_groups = LevelSoundEffectsGroupsHolder(
                 [LevelSoundEffectsGroupDescriptor.parse(raw_data, conf) for _ in range(n_level_sound_effects_groups)])
@@ -106,4 +144,8 @@ class SPSXSection(BaseWADSection):
             ambient_tracks.parse_vags(raw_data, conf)
 
         cls.check_size(size, start, raw_data.tell())
-        return cls(size, spsx_flags, common_sound_effects, ambient_tracks, level_sound_effects_groups, dialogues_bgms)
+        return cls(spsx_flags, common_sound_effects, ambient_tracks, level_sound_effects_groups, idk1, idk2,
+                   n_ff_groups, dialogues_bgms)
+
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+        size_offset = super().serialize(data_out, conf)

@@ -14,9 +14,8 @@ class DPSXSection(BaseWADSection):
     supported_games = PARSABLE_GAMES
     section_content_description = "3D models, animations & level geometry"
 
-    def __init__(self, size: int, models_3d_file: Models3DFile, animations_file: AnimationsFile,
+    def __init__(self, models_3d_file: Models3DFile, animations_file: AnimationsFile,
                  strategies_file: StrategiesFile, level_file: LevelFile):
-        super().__init__(size)
         self.models_3d_file = models_3d_file
         self.animations_file = animations_file
         self.strategies_file = strategies_file
@@ -45,4 +44,4 @@ class DPSXSection(BaseWADSection):
 
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:  # FIXME End of Croc 2 Demo Dummies' level files aren't reversed yet
             cls.check_size(size, start, raw_data.tell())
-        return cls(size, models_3d_file, animations_file, strategies_file, level_file)
+        return cls(models_3d_file, animations_file, strategies_file, level_file)

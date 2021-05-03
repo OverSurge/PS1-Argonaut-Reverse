@@ -11,10 +11,21 @@ class PORTSection(BaseWADSection):
     supported_games = (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
     section_content_description = "chunk zone ids"
 
-    def __init__(self, size: int, idk1: List[bytes], chunks_zones: List[List[int]]):
-        super().__init__(size)
+    def __init__(self, idk1: List[bytes], chunks_zones: List[List[int]]):
         self.idk1 = idk1
         self.chunks_zones = chunks_zones
+
+    @property
+    def size(self) -> int:
+        return 8 + 32 * len(self.idk1) + 12 * self.n_chunks_zones + 2 * self.n_chunks
+
+    @property
+    def n_chunks_zones(self):
+        return len(self.chunks_zones)
+
+    @property
+    def n_chunks(self):
+        return sum(len(zone) for zone in self.chunks_zones)
 
     # noinspection PyMethodOverriding
     @classmethod
@@ -33,4 +44,4 @@ class PORTSection(BaseWADSection):
             chunks_zones.append([int.from_bytes(raw_data.read(2), 'little') for _ in range(n_chunks)])
 
         cls.check_size(size, start, raw_data.tell())
-        return cls(size, idk1, chunks_zones)
+        return cls(idk1, chunks_zones)

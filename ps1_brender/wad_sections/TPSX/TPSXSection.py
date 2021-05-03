@@ -12,8 +12,7 @@ class TPSXSection(BaseWADSection):
     supported_games = PARSABLE_GAMES
     section_content_description = "textures"
 
-    def __init__(self, size: int, titles: Tuple[str], texture_file: TextureFile):
-        super().__init__(size)
+    def __init__(self, titles: Tuple[str], texture_file: TextureFile):
         self.titles = titles
         self.texture_file = texture_file
 
@@ -40,4 +39,4 @@ class TPSXSection(BaseWADSection):
         texture_file = TextureFile.parse(raw_data, conf, start + size, has_legacy_textures)
 
         cls.check_size(size, start, raw_data.tell())
-        return cls(size, titles, texture_file)
+        return cls(titles, texture_file)

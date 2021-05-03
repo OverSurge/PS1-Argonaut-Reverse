@@ -83,7 +83,7 @@ class DialoguesBGMsDescriptor(SoundDescriptor, BaseBRenderClass):
                             self.sampling_rate, conf)
 
 
-class SoundsHolder:
+class SoundsHolder:  # TODO Change this class to hold one descriptor (merge all the attributes here) and one VAG
     def __init__(self, descriptors: List[SoundDescriptor] = None, vags: List[VAGSoundData] = None):
         self._descriptors = descriptors if descriptors is not None else []
         self._vags = vags if vags is not None else []
@@ -96,6 +96,10 @@ class SoundsHolder:
     def vags(self):
         return self._vags
 
+    @property
+    def size(self):
+        return sum(descriptor.size for descriptor in self.descriptors)
+
     def __len__(self):
         return len(self.descriptors)
 
@@ -104,21 +108,24 @@ class SoundsHolder:
 
 
 class LevelSoundEffectsGroupDescriptor(BaseBRenderClass):
-    def __init__(self, sound_effect_descriptor_offset: int, n_sound_effects: int, end_offset: int, size: int,
+    def __init__(self, sound_effect_descriptor_offset: int, n_sound_effects: int, end_offset: int,
                  sounds_holder: SoundsHolder = None):
         self.sound_effect_descriptor_offset = sound_effect_descriptor_offset
         self.n_sound_effects = n_sound_effects
         self.end_offset = end_offset
-        self.size = size
         self.sounds_holder = sounds_holder if sounds_holder is not None else SoundsHolder()
+
+    @property
+    def size(self):
+        return self.sounds_holder.size
 
     @classmethod
     def parse(cls, raw_data: BufferedIOBase, conf: Configuration):
         sound_effect_descriptor_offset = int.from_bytes(raw_data.read(4), 'little')
         n_sound_effects = int.from_bytes(raw_data.read(4), 'little')
         end_offset = int.from_bytes(raw_data.read(4), 'little')
-        size = int.from_bytes(raw_data.read(4), 'little')
-        return cls(sound_effect_descriptor_offset, n_sound_effects, end_offset, size)
+        raw_data.seek(4, SEEK_CUR)  # Sum of group VAGs' sizes
+        return cls(sound_effect_descriptor_offset, n_sound_effects, end_offset)
 
 
 class LevelSoundEffectsGroupsHolder(SoundsHolder):

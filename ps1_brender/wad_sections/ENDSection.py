@@ -13,8 +13,7 @@ class ENDSection(BaseWADSection):
     supported_games = (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
     section_content_description = "sound effects, background music & dialogues"
 
-    def __init__(self, size: int, spsx_section: SPSXSection):
-        super().__init__(size)
+    def __init__(self, spsx_section: SPSXSection):
         self.spsx_section = spsx_section
 
     # noinspection PyMethodOverriding
@@ -32,4 +31,4 @@ class ENDSection(BaseWADSection):
                 raw_data.seek(2048 * math.ceil(raw_data.tell() / 2048))
 
             cls.check_size(size, start, raw_data.tell())
-        return cls(size, spsx_section)
+        return cls(spsx_section)

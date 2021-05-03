@@ -126,7 +126,6 @@ class WAD:
                     filename = f"{wad_filename}_{tracks_prefixes[i]}_{j}"
                     if i == 3 and DialoguesBGMsSoundFlags.IS_BACKGROUND_MUSIC in tracks_lists[i].descriptors[j].flags:
                         filename += '_(BGM)'
-                    print(i, j)
                     (folder_path / f"{filename}.WAV").write_bytes(tracks_lists[i].vags[j].to_wav(filename))
 
     def export_level(self, folder_path: Path, wad_filename: str):

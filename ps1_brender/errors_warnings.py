@@ -1,6 +1,11 @@
-class UnsupportedReverse(NotImplementedError):
+class UnsupportedParsing(NotImplementedError):
     def __init__(self, feature_name):
         super().__init__(f"Sorry, {feature_name} parsing / exporting isn't supported (yet) on this game.")
+
+
+class UnsupportedSerialization(NotImplementedError):
+    def __init__(self, feature_name):
+        super().__init__(f"Sorry, {feature_name} serializing isn't supported (yet) on this game.")
 
 
 class ReverseError(Exception):
