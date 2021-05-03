@@ -1,10 +1,10 @@
 from io import BufferedIOBase
 
-from ps1_brender.configuration import Configuration
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
+from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 
 
-class StrategyData(BaseBRenderClass):
+class StrategyData(BaseDataClass):
     def __init__(self, data: bytes):
         self.data = data
 

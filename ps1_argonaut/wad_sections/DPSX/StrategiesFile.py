@@ -1,12 +1,12 @@
 from io import BufferedIOBase
 from typing import List
 
-from ps1_brender.configuration import Configuration
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.DPSX.StrategyData import StrategyData
+from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.DPSX.StrategyData import StrategyData
 
 
-class StrategiesFile(BaseBRenderClass):
+class StrategiesFile(BaseDataClass):
     def __init__(self, strategies: List[StrategyData]):
         self.strategies = strategies
 

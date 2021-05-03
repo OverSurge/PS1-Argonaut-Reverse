@@ -2,12 +2,12 @@ import warnings
 from io import BufferedIOBase, SEEK_CUR
 from typing import List
 
-from ps1_brender.configuration import Configuration, G
-from ps1_brender.errors_warnings import AnimationsWarning
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
+from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.errors_warnings import AnimationsWarning
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 
 
-class AnimationHeader(BaseBRenderClass):
+class AnimationHeader(BaseDataClass):
     base_frame_data_size = 4
     inter_frames_header_size = 8
 

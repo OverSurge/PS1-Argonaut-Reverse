@@ -2,8 +2,8 @@ from enum import IntEnum
 from io import StringIO
 from typing import List
 
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.DPSX.Model3DData import LevelGeom3DData
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.DPSX.Model3DData import LevelGeom3DData
 
 
 class ChunkRotation(IntEnum):
@@ -13,14 +13,14 @@ class ChunkRotation(IntEnum):
     LEFT = 12
 
 
-class SubChunk(BaseBRenderClass):
+class SubChunk(BaseDataClass):
     def __init__(self, model_3d_data: LevelGeom3DData, height: int, rotation: ChunkRotation):
         self.model_3d_data = model_3d_data
         self.height = height
         self.rotation = rotation
 
 
-class ChunkHolder(BaseBRenderClass):
+class ChunkHolder(BaseDataClass):
     def __init__(self, sub_chunks: List[SubChunk] = None, zone_id: int = None, fvw_data: bytes = None):
         self.sub_chunks = sub_chunks if sub_chunks is not None else []
         self.zone_id = zone_id

@@ -1,10 +1,10 @@
 import math
 from io import BufferedIOBase
 
-from ps1_brender.configuration import Configuration, G
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseWADSection
-from ps1_brender.wad_sections.SPSX.SPSXFlags import SPSXFlags
-from ps1_brender.wad_sections.SPSX.SPSXSection import SPSXSection
+from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
+from ps1_argonaut.wad_sections.SPSX.SPSXFlags import SPSXFlags
+from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
 
 
 class ENDSection(BaseWADSection):

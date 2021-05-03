@@ -1,14 +1,14 @@
 from ctypes import c_int32
 from io import BufferedIOBase
 
-from ps1_brender.configuration import Configuration, wav_header
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
+from ps1_argonaut.configuration import Configuration, wav_header
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 
 MONO = 1
 STEREO = 2
 
 
-class VAGSoundData(BaseBRenderClass):
+class VAGSoundData(BaseDataClass):
     constants = ((0.0, 0.0),
                  (60.0 / 64.0, 0.0),
                  (115.0 / 64.0, -52.0 / 64.0),
@@ -33,7 +33,7 @@ class VAGSoundData(BaseBRenderClass):
         header_size = 0 if with_headers else 48
         header = b"VAGp\x00\x00\x00\x00\x00\x00\x00\x00" + (self.size // self.n_channels).to_bytes(4, 'big') + \
                  self.sampling_rate.to_bytes(4, 'big') + \
-                 b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00OverSurgeBRender" if with_headers else None
+                 b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00OverSurgeReverse" if with_headers else None
         if self.n_channels == 1:
             return (header + self.data,) if with_headers else (self.data,)
         else:

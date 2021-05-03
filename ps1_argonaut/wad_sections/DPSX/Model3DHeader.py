@@ -1,12 +1,12 @@
 import warnings
 from io import BufferedIOBase, SEEK_CUR
 
-from ps1_brender.configuration import Configuration, G
-from ps1_brender.errors_warnings import Models3DWarning
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
+from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.errors_warnings import Models3DWarning
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 
 
-class Model3DHeader(BaseBRenderClass):
+class Model3DHeader(BaseDataClass):
     def __init__(self, n_vertices: int, n_faces: int, n_bounding_box_info: int):
         self.n_vertices = n_vertices
         self.n_faces = n_faces

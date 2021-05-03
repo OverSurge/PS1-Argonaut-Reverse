@@ -1,7 +1,7 @@
 import math
 from io import BufferedIOBase
 
-from ps1_brender.configuration import Configuration, G
+from ps1_argonaut.configuration import Configuration, G
 
 
 class TextureData:

@@ -1,12 +1,12 @@
 from io import BufferedIOBase
 from typing import Tuple
 
-from ps1_brender.configuration import Configuration, G
-from ps1_brender.errors_warnings import SectionNameError, SectionSizeMismatch, UnsupportedParsing, \
+from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.errors_warnings import SectionNameError, SectionSizeMismatch, UnsupportedParsing, \
     UnsupportedSerialization
 
 
-class BaseBRenderClass:
+class BaseDataClass:
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration):
         pass
@@ -15,7 +15,7 @@ class BaseBRenderClass:
         pass
 
 
-class BaseWADSection(BaseBRenderClass):
+class BaseWADSection(BaseDataClass):
     supported_games: Tuple[G]
     section_content_description: str
     codename_str: str

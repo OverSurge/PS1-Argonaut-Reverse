@@ -4,13 +4,13 @@ from typing import List, Tuple, Union
 
 from PIL import Image
 
-from ps1_brender.configuration import Configuration, G
-from ps1_brender.errors_warnings import TexturesWarning, ZeroRunLengthError
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.TPSX.TextureData import TextureData
+from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.errors_warnings import TexturesWarning, ZeroRunLengthError
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.TPSX.TextureData import TextureData
 
 
-class TextureFile(BaseBRenderClass):
+class TextureFile(BaseDataClass):
     image_header_size = 4
     rle_size = 2
     image_size = 1024

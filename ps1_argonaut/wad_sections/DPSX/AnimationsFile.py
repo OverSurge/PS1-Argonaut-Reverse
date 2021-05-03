@@ -1,12 +1,12 @@
 from io import BufferedIOBase
 from typing import List
 
-from ps1_brender.configuration import Configuration
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.DPSX.AnimationData import AnimationData
+from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.DPSX.AnimationData import AnimationData
 
 
-class AnimationsFile(BaseBRenderClass):
+class AnimationsFile(BaseDataClass):
     def __init__(self, animations: List[AnimationData]):
         self.animations = animations
 

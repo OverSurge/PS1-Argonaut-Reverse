@@ -1,12 +1,12 @@
 from io import BufferedIOBase
 from typing import List
 
-from ps1_brender.configuration import Configuration
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.DPSX.Model3DData import Model3DData
+from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
 
 
-class Models3DFile(BaseBRenderClass):
+class Models3DFile(BaseDataClass):
     def __init__(self, n_models: int, models: List[Model3DData]):
         self.models = models
         self.n_models: int = n_models

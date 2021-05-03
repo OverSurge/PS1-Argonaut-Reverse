@@ -3,15 +3,15 @@ from io import BytesIO, SEEK_CUR, StringIO
 from pathlib import Path
 from typing import Dict, Union, List
 
-from ps1_brender.configuration import Configuration, wavefront_header
-from ps1_brender.errors_warnings import SectionNameError
-from ps1_brender.wad_sections.DPSX.DPSXSection import DPSXSection
-from ps1_brender.wad_sections.DPSX.Model3DData import Model3DData
-from ps1_brender.wad_sections.ENDSection import ENDSection
-from ps1_brender.wad_sections.PORTSection import PORTSection
-from ps1_brender.wad_sections.SPSX.SPSXSection import SPSXSection
-from ps1_brender.wad_sections.SPSX.SoundDescriptors import SoundsHolder, DialoguesBGMsSoundFlags
-from ps1_brender.wad_sections.TPSX.TPSXSection import TPSXSection
+from ps1_argonaut.configuration import Configuration, wavefront_header
+from ps1_argonaut.errors_warnings import SectionNameError
+from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
+from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
+from ps1_argonaut.wad_sections.ENDSection import ENDSection
+from ps1_argonaut.wad_sections.PORTSection import PORTSection
+from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
+from ps1_argonaut.wad_sections.SPSX.SoundDescriptors import SoundsHolder, DialoguesBGMsSoundFlags
+from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
 class WAD:

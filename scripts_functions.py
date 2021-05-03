@@ -2,8 +2,8 @@ import math
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from ps1_brender.configuration import G
-from ps1_brender.errors_warnings import ReverseError
+from ps1_argonaut.configuration import G
+from ps1_argonaut.errors_warnings import ReverseError
 
 
 def parse_dir_dat_paths(input_path: Path, game: G):

@@ -3,9 +3,9 @@ from enum import IntFlag
 from io import BufferedIOBase, SEEK_CUR
 from typing import List, Union
 
-from ps1_brender.configuration import Configuration
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.SPSX.VAGSoundData import MONO, VAGSoundData, STEREO
+from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.SPSX.VAGSoundData import MONO, VAGSoundData, STEREO
 
 
 class SoundEffectsAmbientFlags(IntFlag):
@@ -27,7 +27,7 @@ class SoundDescriptor:
         pass
 
 
-class SoundEffectsAmbientDescriptor(SoundDescriptor, BaseBRenderClass):
+class SoundEffectsAmbientDescriptor(SoundDescriptor, BaseDataClass):
     known_values_1st_flags_byte = (0x00000000, 0x00000001)
     known_values_2nd_2rd_flags_bytes = (0x00000000, 0x00010100)
 
@@ -61,7 +61,7 @@ class SoundEffectsDescriptor(SoundEffectsAmbientDescriptor):
         return res
 
 
-class DialoguesBGMsDescriptor(SoundDescriptor, BaseBRenderClass):
+class DialoguesBGMsDescriptor(SoundDescriptor, BaseDataClass):
     def __init__(self, end_section_offset: int, sampling_rate: int, flags: DialoguesBGMsSoundFlags, uk1: bytes,
                  size: int):
         super().__init__(sampling_rate, flags, size)
@@ -107,7 +107,7 @@ class SoundsHolder:  # TODO Change this class to hold one descriptor (merge all 
         self._vags = [x.parse_vag(data_in, conf) for x in self.descriptors]
 
 
-class LevelSoundEffectsGroupDescriptor(BaseBRenderClass):
+class LevelSoundEffectsGroupDescriptor(BaseDataClass):
     def __init__(self, sound_effect_descriptor_offset: int, n_sound_effects: int, end_offset: int,
                  sounds_holder: SoundsHolder = None):
         self.sound_effect_descriptor_offset = sound_effect_descriptor_offset

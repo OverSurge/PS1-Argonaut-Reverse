@@ -5,12 +5,12 @@ from typing import List
 import numpy as np
 from pyquaternion import Quaternion
 
-from ps1_brender.configuration import Configuration
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.DPSX.AnimationHeader import AnimationHeader
+from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.DPSX.AnimationHeader import AnimationHeader
 
 
-class AnimationData(BaseBRenderClass):
+class AnimationData(BaseDataClass):
     def __init__(self, header: AnimationHeader, frames: List[List[np.ndarray]]):
         self.frames = frames
         self.header = header

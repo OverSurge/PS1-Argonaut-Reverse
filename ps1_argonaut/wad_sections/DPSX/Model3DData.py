@@ -3,16 +3,16 @@ from typing import List, TextIO, Union
 
 import numpy as np
 
-from ps1_brender.configuration import Configuration, G, wavefront_header
-from ps1_brender.errors_warnings import IncompatibleAnimationError, NegativeIndexError, VerticesNormalsGroupsMismatch
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseBRenderClass
-from ps1_brender.wad_sections.DPSX import ChunkClasses
-from ps1_brender.wad_sections.DPSX.AnimationData import AnimationData
-from ps1_brender.wad_sections.DPSX.Model3DHeader import Model3DHeader
-from ps1_brender.wad_sections.TPSX.TextureData import TextureData
+from ps1_argonaut.configuration import Configuration, G, wavefront_header
+from ps1_argonaut.errors_warnings import IncompatibleAnimationError, NegativeIndexError, VerticesNormalsGroupsMismatch
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.wad_sections.DPSX import ChunkClasses
+from ps1_argonaut.wad_sections.DPSX.AnimationData import AnimationData
+from ps1_argonaut.wad_sections.DPSX.Model3DHeader import Model3DHeader
+from ps1_argonaut.wad_sections.TPSX.TextureData import TextureData
 
 
-class BaseModel3DData(BaseBRenderClass):
+class BaseModel3DData(BaseDataClass):
     vertex_size = 8
     face_size = 20
     chunk_face_size = 12

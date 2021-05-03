@@ -1,9 +1,9 @@
 from io import BufferedIOBase, SEEK_CUR
 from typing import Tuple
 
-from ps1_brender.configuration import Configuration, G, PARSABLE_GAMES
-from ps1_brender.wad_sections.BaseBRenderClasses import BaseWADSection
-from ps1_brender.wad_sections.TPSX.TextureFile import TextureFile
+from ps1_argonaut.configuration import Configuration, G, PARSABLE_GAMES
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
+from ps1_argonaut.wad_sections.TPSX.TextureFile import TextureFile
 
 
 class TPSXSection(BaseWADSection):

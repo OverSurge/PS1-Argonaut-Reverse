@@ -2,13 +2,14 @@ import argparse
 from pathlib import Path
 from typing import List, Tuple, Union
 
-from ps1_brender.configuration import Configuration, PARSABLE_GAMES, PARSABLE_SECTIONS, SLICEABLE_GAMES, SUPPORTED_GAMES
-from ps1_brender.errors_warnings import SectionNameError
-from ps1_brender.wad_sections.WAD import WAD
+from ps1_argonaut.configuration import Configuration, PARSABLE_GAMES, PARSABLE_SECTIONS, SLICEABLE_GAMES, \
+    SUPPORTED_GAMES
+from ps1_argonaut.errors_warnings import SectionNameError
+from ps1_argonaut.wad_sections.WAD import WAD
 from scripts_functions import parse_and_slice
 
 parser = argparse.ArgumentParser(
-    description="Utility to extract data and display information about PS1 BRender games like Croc or Harry Potter. "
+    description="Utility to extract data and display information about PS1 Argonaut games like Croc 2 or Harry Potter. "
                 "By OverSurge.")
 parser.add_argument("game", type=str, choices=[game.title for game in SLICEABLE_GAMES],
                     help="The game the file(s) are from. If it is not listed, choose one close to it.")
