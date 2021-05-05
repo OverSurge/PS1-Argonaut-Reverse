@@ -5,9 +5,9 @@ from typing import Optional
 from ps1_argonaut.configuration import Configuration, G
 from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.SPSX.SPSXFlags import SPSXFlags
-from ps1_argonaut.wad_sections.SPSX.SoundDescriptors import SoundsHolder, LevelSoundEffectsGroupsHolder, \
-    SoundEffectsDescriptor, SoundEffectsAmbientDescriptor, LevelSoundEffectsGroupDescriptor, DialoguesBGMsDescriptor, \
-    DialoguesBGMsHolder
+from ps1_argonaut.wad_sections.SPSX.SoundContainers import CommonSoundEffectsContainer, AmbientContainer, \
+    LevelSoundEffectsContainer, LevelSoundEffectsGroupContainer, DialoguesBGMsContainer
+from ps1_argonaut.wad_sections.SPSX.Sounds import EffectSound, AmbientSound, DialogueBGMSound
 
 
 class SPSXSection(BaseWADSection):
@@ -16,13 +16,15 @@ class SPSXSection(BaseWADSection):
     supported_games = (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
     section_content_description = "sound effects, background music & dialogues"
 
-    def __init__(self, spsx_flags: SPSXFlags, common_sound_effects: SoundsHolder,
-                 ambient_tracks: SoundsHolder, level_sound_effects_groups: LevelSoundEffectsGroupsHolder,
-                 idk1: int, idk2: int, n_ff_groups: int, dialogues_bgms: DialoguesBGMsHolder):
+    def __init__(self, spsx_flags: SPSXFlags, common_sound_effects: CommonSoundEffectsContainer,
+                 ambient_tracks: AmbientContainer, level_sound_effects_groups: LevelSoundEffectsContainer,
+                 idk1: int, idk2: int, n_ff_groups: int, dialogues_bgms: DialoguesBGMsContainer):
         self.spsx_flags = spsx_flags
         self.common_sound_effects = common_sound_effects
         self.ambient_tracks = ambient_tracks
         self.level_sound_effects_groups = level_sound_effects_groups
+        self.idk1 = idk1
+        self.idk2 = idk2
         self.n_ff_groups = n_ff_groups
         self.dialogues_bgms = dialogues_bgms
 
@@ -53,19 +55,15 @@ class SPSXSection(BaseWADSection):
 
     @property
     def n_level_sound_effects_groups(self):
-        return len(self.level_sound_effects_groups.groups)
+        return len(self.level_sound_effects_groups)
 
     @property
     def n_level_sound_effects(self):
-        return len(self.level_sound_effects_groups)
+        return self.level_sound_effects_groups.n_sound_effects
 
     @property
     def n_dialogues_bgms(self):
         return len(self.dialogues_bgms)
-
-    @property
-    def dialogues_bgms_total_size(self):
-        return sum(dialogue_bgm.size for dialogue_bgm in self.dialogues_bgms.descriptors)
 
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration):
@@ -83,43 +81,36 @@ class SPSXSection(BaseWADSection):
         n_sound_effects = int.from_bytes(data_in.read(4), 'little')
         logging.debug(f"sound effects count: {n_sound_effects}")
 
-        common_sound_effects: Optional[SoundsHolder] = None
+        common_sound_effects: Optional[CommonSoundEffectsContainer] = None
         if SPSXFlags.HAS_COMMON_SOUND_EFFECTS in spsx_flags:
-            common_sound_effects = SoundsHolder(
-                [SoundEffectsDescriptor.parse(data_in, conf) for _ in range(n_sound_effects)])
+            common_sound_effects = CommonSoundEffectsContainer(
+                EffectSound.parse(data_in, conf) for _ in range(n_sound_effects))
 
-        ambient_tracks: Optional[SoundsHolder] = None
+        ambient_tracks: Optional[AmbientContainer] = None
         if SPSXFlags.HAS_AMBIENT_TRACKS in spsx_flags:
             ambient_tracks_headers_size = int.from_bytes(data_in.read(4), 'little')
             assert ambient_tracks_headers_size % 20 == 0
             n_ambient_tracks = ambient_tracks_headers_size // 20
-            ambient_tracks = SoundsHolder(
-                [SoundEffectsAmbientDescriptor.parse(data_in, conf) for _ in range(n_ambient_tracks)])
+            ambient_tracks = AmbientContainer(AmbientSound.parse(data_in, conf) for _ in range(n_ambient_tracks))
 
         # Level sound effects groups
         idk1 = None
         idk2 = None
         n_ff_groups = 0
-        level_sound_effects_groups: Optional[LevelSoundEffectsGroupsHolder] = None
+        level_sound_effects_groups: Optional[LevelSoundEffectsContainer] = None
         if SPSXFlags.HAS_LEVEL_SOUND_EFFECTS in spsx_flags:
             n_level_sound_effects_groups = int.from_bytes(data_in.read(4), 'little')
             idk1 = int.from_bytes(data_in.read(4), 'little')
             idk2 = int.from_bytes(data_in.read(4), 'little')
             n_ff_groups = int.from_bytes(data_in.read(4), 'little')
-            level_sound_effects_groups = LevelSoundEffectsGroupsHolder(
-                [LevelSoundEffectsGroupDescriptor.parse(data_in, conf) for _ in range(n_level_sound_effects_groups)])
-
-            for group in level_sound_effects_groups.groups:
-                group.sounds_holder = SoundsHolder(
-                    [SoundEffectsAmbientDescriptor.parse(data_in, conf) for _ in range(group.n_sound_effects)])
-
-            assert sum([group.size for group in level_sound_effects_groups.groups]) == \
-                   sum([sum([sound_effect.size for sound_effect in group.sounds_holder.descriptors]) for group in
-                        level_sound_effects_groups.groups])
+            level_sound_effects_groups = LevelSoundEffectsContainer(
+                LevelSoundEffectsGroupContainer.parse(data_in, conf) for _ in range(n_level_sound_effects_groups))
+            for group in level_sound_effects_groups:
+                group.extend(EffectSound.parse(data_in, conf) for _ in range(group.n_sound_effects))
             data_in.seek(n_ff_groups * 16, SEEK_CUR)  # FF groups
 
         # Dialogues & BGMs
-        dialogues_bgms: Optional[DialoguesBGMsHolder] = None
+        dialogues_bgms: Optional[DialoguesBGMsContainer] = None
         n_dialogues_bgms = int.from_bytes(data_in.read(4), 'little')
         if SPSXFlags.HAS_COMMON_SOUND_EFFECTS in spsx_flags:
             # Gap between level sound effects and dialogues/BGMs
@@ -127,20 +118,18 @@ class SPSXSection(BaseWADSection):
             assert (end_gap != 0) == (SPSXFlags.HAS_LEVEL_SOUND_EFFECTS in spsx_flags)
             logging.debug(f"DNE (END) gap: {end_gap}")
 
-            dialogues_bgms = \
-                DialoguesBGMsHolder([DialoguesBGMsDescriptor.parse(data_in, conf) for _ in range(n_dialogues_bgms)])
+            dialogues_bgms = DialoguesBGMsContainer(
+                DialogueBGMSound.parse(data_in, conf) for _ in range(n_dialogues_bgms))
 
             # Common sound effects audio data
             common_sound_effects_total_size = int.from_bytes(data_in.read(4), 'little')
-            assert common_sound_effects_total_size == \
-                   sum([sound_effect.size for sound_effect in common_sound_effects.descriptors])
+            assert common_sound_effects_total_size == common_sound_effects.size
             common_sound_effects.parse_vags(data_in, conf)
 
         # Ambient tracks audio data
         if SPSXFlags.HAS_AMBIENT_TRACKS in spsx_flags:
             ambient_tracks_total_size = int.from_bytes(data_in.read(4), 'little')
-            assert ambient_tracks_total_size == \
-                   sum([sound_effect.size for sound_effect in ambient_tracks.descriptors])
+            assert ambient_tracks_total_size == ambient_tracks.size
             ambient_tracks.parse_vags(data_in, conf)
 
         cls.check_size(size, start, data_in.tell())

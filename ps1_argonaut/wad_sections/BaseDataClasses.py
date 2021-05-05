@@ -40,8 +40,9 @@ class BaseWADSection(BaseDataClass):
         cls.check_codename(data_in)
         return int.from_bytes(data_in.read(4), 'little'), data_in.tell()
 
-    def serialize(self, data_in: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
         if conf.game not in self.supported_games:
             raise UnsupportedSerialization(self.section_content_description)
-        data_in.write(b'\x00\x00\x00\x00')  # Section's size
-        return data_in.tell() - 4
+        data_out.write(self.codename_bytes)
+        data_out.write(b'\x00\x00\x00\x00')  # Section's size
+        return data_out.tell()

@@ -1,7 +1,7 @@
 import math
 from io import BytesIO, SEEK_CUR, StringIO
 from pathlib import Path
-from typing import Dict, Union, List
+from typing import Dict, Union
 
 from ps1_argonaut.configuration import Configuration, wavefront_header
 from ps1_argonaut.errors_warnings import SectionNameError
@@ -10,7 +10,7 @@ from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
 from ps1_argonaut.wad_sections.ENDSection import ENDSection
 from ps1_argonaut.wad_sections.PORTSection import PORTSection
 from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
-from ps1_argonaut.wad_sections.SPSX.SoundDescriptors import SoundsHolder, DialoguesBGMsSoundFlags
+from ps1_argonaut.wad_sections.SPSX.Sounds import DialoguesBGMsSoundFlags
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
@@ -118,15 +118,24 @@ class WAD:
 
     def export_audio(self, folder_path: Path, wad_filename: str):
         if self.spsx:
-            tracks_lists: List[SoundsHolder] = [self.spsx.common_sound_effects, self.spsx.ambient_tracks,
-                                                self.spsx.level_sound_effects_groups, self.spsx.dialogues_bgms]
-            tracks_prefixes = ('effect', 'ambient', 'level_effect', 'dialogue_bgm')
-            for i in range(len(tracks_lists)):
-                for j in range(len(tracks_lists[i])):
-                    filename = f"{wad_filename}_{tracks_prefixes[i]}_{j}"
-                    if i == 3 and DialoguesBGMsSoundFlags.IS_BACKGROUND_MUSIC in tracks_lists[i].descriptors[j].flags:
-                        filename += '_(BGM)'
-                    (folder_path / f"{filename}.WAV").write_bytes(tracks_lists[i].vags[j].to_wav(filename))
+            mono_sounds = {'effect': self.spsx.common_sound_effects,
+                           'ambient': self.spsx.ambient_tracks,
+                           'level_effect': self.spsx.level_sound_effects_groups}
+            for prefix, sounds in mono_sounds.items():
+                for i, vag in enumerate(sounds.vags):
+                    filename = f"{wad_filename}_{prefix}_{i}"
+                    (folder_path / f"{filename}.WAV").write_bytes(vag.to_wav(filename))
+
+            dialogue_index = 0
+            bgm_index = 0
+            for sound in self.spsx.dialogues_bgms:
+                if DialoguesBGMsSoundFlags.IS_BACKGROUND_MUSIC in sound.flags:
+                    filename = f"{wad_filename}_background_music_{bgm_index}"
+                    bgm_index += 1
+                else:
+                    filename = f"{wad_filename}_dialogue_{dialogue_index}"
+                    dialogue_index += 1
+                (folder_path / f"{filename}.WAV").write_bytes(sound.vag.to_wav(filename))
 
     def export_level(self, folder_path: Path, wad_filename: str):
         if not folder_path.exists():
