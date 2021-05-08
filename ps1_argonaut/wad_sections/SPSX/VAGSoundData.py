@@ -15,19 +15,22 @@ class VAGSoundData(BaseDataClass):
                  (98.0 / 64.0, -55.0 / 64.0),
                  (122.0 / 64.0, -60.0 / 64.0))
 
-    def __init__(self, size: int, data: bytes, n_channels: int, sampling_rate: int, conf: Configuration):
+    def __init__(self, data: bytes, n_channels: int, sampling_rate: int, conf: Configuration):
         if n_channels != MONO and n_channels != STEREO:
             raise ValueError
-        self.size: int = size
-        self.data: bytes = data
-        self.n_channels: int = n_channels
-        self.sampling_rate: int = sampling_rate
+        self.data = data
+        self.n_channels = n_channels
+        self.sampling_rate = sampling_rate
         self.conf = conf
+
+    @property
+    def size(self):
+        return len(self.data)
 
     # noinspection PyMethodOverriding
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, size: int, channels: int, sampling_rate: int):
-        return cls(size, data_in.read(size), channels, sampling_rate, conf)
+        return cls(data_in.read(size), channels, sampling_rate, conf)
 
     def to_vag(self, with_headers: bool = True):
         header_size = 0 if with_headers else 48

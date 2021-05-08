@@ -11,7 +11,7 @@ class BaseDataClass:
     def parse(cls, data_in: BufferedIOBase, conf: Configuration):
         pass
 
-    def serialize(self, data_in: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
         pass
 
 
@@ -20,6 +20,10 @@ class BaseWADSection(BaseDataClass):
     section_content_description: str
     codename_str: str
     codename_bytes: bytes
+
+    def __init__(self, data=None):
+        if data is not None:
+            self._data = data
 
     @classmethod
     def check_codename(cls, data_in: BufferedIOBase):
@@ -46,3 +50,12 @@ class BaseWADSection(BaseDataClass):
         data_out.write(self.codename_bytes)
         data_out.write(b'\x00\x00\x00\x00')  # Section's size
         return data_out.tell()
+
+    @classmethod
+    def fallback_parse(cls, data_in: BufferedIOBase):
+        codename = data_in.read(4)
+        size = data_in.read(4)
+        return cls(codename + size + data_in.read(int.from_bytes(size, 'little')))
+
+    def fallback_serialize(self, data_out: BufferedIOBase):
+        data_out.write(self._data)

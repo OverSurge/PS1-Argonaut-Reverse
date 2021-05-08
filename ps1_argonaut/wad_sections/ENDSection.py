@@ -14,6 +14,7 @@ class ENDSection(BaseWADSection):
     section_content_description = "sound effects, background music & dialogues"
 
     def __init__(self, spsx_section: SPSXSection):
+        super().__init__()
         self.spsx_section = spsx_section
 
     # noinspection PyMethodOverriding
@@ -21,7 +22,7 @@ class ENDSection(BaseWADSection):
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, spsx_section: SPSXSection):
         size, start = super().parse(data_in, conf)
         if size != 0:
-            if SPSXFlags.HAS_LEVEL_SOUND_EFFECTS in spsx_section.spsx_flags:
+            if SPSXFlags.HAS_LEVEL_SFX in spsx_section.spsx_flags:
                 spsx_section.level_sound_effects_groups.parse_vags(data_in, conf)
 
             data_in.seek(2048 * math.ceil(data_in.tell() / 2048))

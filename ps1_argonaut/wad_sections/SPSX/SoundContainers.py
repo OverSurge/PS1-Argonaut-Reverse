@@ -1,11 +1,12 @@
 import itertools
 import math
 from io import BufferedIOBase, SEEK_CUR
+from struct import Struct
 from typing import Iterable
 
 from ps1_argonaut.configuration import Configuration
 from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
-from ps1_argonaut.wad_sections.SPSX.Sounds import Sound
+from ps1_argonaut.wad_sections.SPSX.Sounds import Sound, EffectSound
 
 
 class SoundsContainer(list[Sound]):
@@ -24,6 +25,10 @@ class SoundsContainer(list[Sound]):
         for sound in self:
             sound.parse_vag(data_in, conf)
 
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+        for sound in self:
+            sound.serialize(data_out, conf)
+
 
 class CommonSoundEffectsContainer(SoundsContainer):
     pass
@@ -34,16 +39,19 @@ class AmbientContainer(SoundsContainer):
 
 
 class LevelSoundEffectsGroupContainer(SoundsContainer, BaseDataClass):
-    def __init__(self, sound_effect_descriptor_offset: int, n_sound_effects: int, end_offset: int,
-                 sounds: Iterable[Sound] = None):
+    struct = Struct('<4I')
+
+    def __init__(self, sound_effect_descriptor_offset: int, end_offset: int, sounds: Iterable[Sound] = None,
+                 n_sound_effects: int = None):
         super().__init__(sounds if sounds else [])
-        self.sound_effect_descriptor_offset = sound_effect_descriptor_offset
-        self.n_sound_effects = n_sound_effects  # TODO Remove
-        self.end_offset = end_offset
+        self.sound_effect_descriptor_offset = sound_effect_descriptor_offset  # FIXME Needs to be re-calculated
+        if n_sound_effects is not None:
+            self._n_sound_effects = n_sound_effects
+        self.end_offset = end_offset  # FIXME Needs to be re-calculated
 
     @property
     def size(self):
-        return sum(sound.vag.size for sound in self)
+        return sum(sound.size for sound in self)
 
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration):
@@ -51,10 +59,21 @@ class LevelSoundEffectsGroupContainer(SoundsContainer, BaseDataClass):
         n_sound_effects = int.from_bytes(data_in.read(4), 'little')
         end_offset = int.from_bytes(data_in.read(4), 'little')
         data_in.seek(4, SEEK_CUR)  # Sum of group VAGs' sizes
-        return cls(sound_effect_descriptor_offset, n_sound_effects, end_offset)
+        return cls(sound_effect_descriptor_offset, end_offset, n_sound_effects=n_sound_effects)
+
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+        data_out.write(self.struct.pack(self.sound_effect_descriptor_offset, len(self), self.end_offset, self.size))
+
+    def parse_children(self, data_in: BufferedIOBase, conf: Configuration):
+        self.extend(EffectSound.parse(data_in, conf) for _ in range(self._n_sound_effects))
+        del self._n_sound_effects
+
+    def serialize_children(self, data_out: BufferedIOBase, conf: Configuration):
+        for sound in self:
+            sound.serialize(data_out, conf)
 
 
-class LevelSoundEffectsContainer(list[LevelSoundEffectsGroupContainer]):
+class LevelSoundEffectsContainer(list[LevelSoundEffectsGroupContainer], BaseDataClass):
     def __init__(self, groups: Iterable[LevelSoundEffectsGroupContainer]):
         super().__init__(groups if groups else [])
 
@@ -78,6 +97,10 @@ class LevelSoundEffectsContainer(list[LevelSoundEffectsGroupContainer]):
         for group in self:
             data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
             group.parse_vags(data_in, conf)
+
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+        for group in self:
+            group.serialize(data_out, conf)
 
 
 class DialoguesBGMsContainer(SoundsContainer):

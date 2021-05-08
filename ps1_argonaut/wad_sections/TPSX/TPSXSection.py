@@ -13,6 +13,7 @@ class TPSXSection(BaseWADSection):
     section_content_description = "textures"
 
     def __init__(self, titles: Tuple[str], texture_file: TextureFile):
+        super().__init__()
         self.titles = titles
         self.texture_file = texture_file
 

@@ -12,6 +12,7 @@ class PORTSection(BaseWADSection):
     section_content_description = "chunk zone ids"
 
     def __init__(self, idk1: List[bytes], chunks_zones: List[List[int]]):
+        super().__init__()
         self.idk1 = idk1
         self.chunks_zones = chunks_zones
 

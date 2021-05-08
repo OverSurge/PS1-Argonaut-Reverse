@@ -14,8 +14,9 @@ class DPSXSection(BaseWADSection):
     supported_games = PARSABLE_GAMES
     section_content_description = "3D models, animations & level geometry"
 
-    def __init__(self, models_3d_file: Models3DFile, animations_file: AnimationsFile,
-                 strategies_file: StrategiesFile, level_file: LevelFile):
+    def __init__(self, models_3d_file: Models3DFile, animations_file: AnimationsFile, strategies_file: StrategiesFile,
+                 level_file: LevelFile):
+        super().__init__()
         self.models_3d_file = models_3d_file
         self.animations_file = animations_file
         self.strategies_file = strategies_file

@@ -1,10 +1,11 @@
 import math
-from io import BytesIO, SEEK_CUR, StringIO
+from io import BytesIO, SEEK_CUR, StringIO, BufferedIOBase
 from pathlib import Path
-from typing import Dict, Union
+from typing import Dict, Union, Optional
 
 from ps1_argonaut.configuration import Configuration, wavefront_header
 from ps1_argonaut.errors_warnings import SectionNameError
+from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
 from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
 from ps1_argonaut.wad_sections.ENDSection import ENDSection
@@ -14,18 +15,38 @@ from ps1_argonaut.wad_sections.SPSX.Sounds import DialoguesBGMsSoundFlags
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
-class WAD:
-    def __init__(self, tpsx: TPSXSection = None, spsx: SPSXSection = None, dpsx: DPSXSection = None,
-                 port: PORTSection = None, end: ENDSection = None):
-        self.tpsx = tpsx
-        self.spsx = spsx
-        self.dpsx = dpsx
-        self.port = port
-        self.end = end
+class WAD(dict[bytes, BaseWADSection]):
+    sections_conf: Dict[bytes, BaseWADSection] = {
+        TPSXSection.codename_bytes: TPSXSection, SPSXSection.codename_bytes: SPSXSection,
+        DPSXSection.codename_bytes: DPSXSection, PORTSection.codename_bytes: PORTSection,
+        ENDSection.codename_bytes: ENDSection}
+
+    def __init__(self, sections: Dict[bytes, BaseWADSection]):
+        super().__init__(sections)
+
+    @property
+    def tpsx(self) -> Optional[TPSXSection]:
+        return self[TPSXSection.codename_bytes] if TPSXSection.codename_bytes in self else None
+
+    @property
+    def spsx(self) -> Optional[SPSXSection]:
+        return self[SPSXSection.codename_bytes] if SPSXSection.codename_bytes in self else None
+
+    @property
+    def dpsx(self) -> Optional[DPSXSection]:
+        return self[DPSXSection.codename_bytes] if DPSXSection.codename_bytes in self else None
+
+    @property
+    def port(self) -> Optional[PORTSection]:
+        return self[PORTSection.codename_bytes] if PORTSection.codename_bytes in self else None
+
+    @property
+    def end(self) -> Optional[ENDSection]:
+        return self[ENDSection.codename_bytes] if ENDSection.codename_bytes in self else None
 
     @property
     def titles(self):
-        return None if (self.tpsx is None) else self.tpsx.titles
+        return () if self.tpsx is None else self.tpsx.titles
 
     @property
     def textures(self):
@@ -170,10 +191,10 @@ class WAD:
                 codename = data_in.read(4)
 
                 # Detects incorrect WADs like FESOUND or FETHUND
-                if len(sections) == 0 and codename != TPSXSection.codename_bytes:
+                if len(sections_offsets) == 0 and codename != TPSXSection.codename_bytes:
                     raise SectionNameError(data_in.tell(), TPSXSection.codename_str, codename.decode('latin1'))
 
-                sections[codename.decode('latin1')] = data_in.tell() - 4
+                sections_offsets[codename] = data_in.tell() - 4
                 data_in.seek(int.from_bytes(data_in.read(4), 'little'), SEEK_CUR)
                 if codename == ENDSection.codename_bytes:  # ' DNE' (END)
                     break
@@ -185,38 +206,35 @@ class WAD:
             data_in = BytesIO(file_path_or_data)
         else:
             raise TypeError("file_path_or_data should be of type Path or bytes")
-        sections: Dict[str, int] = {}
+        sections_offsets: Dict[bytes, int] = {}
+        sections = {}
         parse_sections()
 
-        if TPSXSection.codename_str in conf.parse_sections:
-            data_in.seek(sections[TPSXSection.codename_str])
-            tpsx = TPSXSection.parse(data_in, conf)
-        else:
-            tpsx = None
-        if SPSXSection.codename_str in sections.keys() and SPSXSection.codename_str in conf.parse_sections:
-            data_in.seek(sections[SPSXSection.codename_str])
-            spsx = SPSXSection.parse(data_in, conf)
-            end = True
-        else:
-            spsx = None
-
-        if DPSXSection.codename_str in conf.parse_sections:
-            data_in.seek(sections[DPSXSection.codename_str])
-            dpsx = DPSXSection.parse(data_in, conf)
-        else:
-            dpsx = None
-
-        if PORTSection.codename_str in sections.keys() and PORTSection.codename_str in conf.parse_sections:
-            data_in.seek(sections[PORTSection.codename_str])
-            port = PORTSection.parse(data_in, conf)
-        else:
-            port = None
-
-        if spsx:
-            data_in.seek(sections[ENDSection.codename_str])
-            end = ENDSection.parse(data_in, conf, spsx)
-        else:
-            end = None
+        for codename_bytes, offset in sections_offsets.items():
+            if codename_bytes in cls.sections_conf:
+                section = cls.sections_conf[codename_bytes]
+                if section.codename_str in conf.parse_sections:
+                    data_in.seek(offset)
+                    if codename_bytes != ENDSection.codename_bytes:
+                        sections[codename_bytes] = section.parse(data_in, conf)
+                    else:
+                        sections[codename_bytes] = section.parse(data_in, conf,
+                                                                 spsx_section=sections[SPSXSection.codename_bytes])
+            else:
+                sections[codename_bytes] = BaseWADSection.fallback_parse(data_in)
 
         data_in.close()
-        return cls(tpsx, spsx, dpsx, port, end)
+        return cls(sections)
+
+    def serialize(self, file_path_or_data: Union[Path, BufferedIOBase], conf: Configuration):
+        data_out = file_path_or_data if isinstance(file_path_or_data, BufferedIOBase) else BytesIO()
+
+        for section in self.values():
+            if type(section) is BaseWADSection:
+                section.fallback_serialize(data_out)
+            else:
+                section.serialize(data_out, conf)
+
+        if isinstance(file_path_or_data, Path):
+            with open(file_path_or_data, 'wb') as output_file:
+                output_file.write(data_out.read())
