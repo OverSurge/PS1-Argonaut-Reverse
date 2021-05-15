@@ -2,7 +2,7 @@
 
 ### Unofficial documentation of PS1 Argonaut games formats & Python extraction scripts.
 
-> Extracted assets: [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets).
+> Extracted assets: [PS1-Argonaut-Assets](https://github.com/OverSurge/PS1-Argonaut-Assets).
 
 #### Currently supported games (Animations, 3D models, textures, maps & audio, depends on the game)
 
@@ -24,15 +24,15 @@ Therefore, this documentation and these tools cannot work with all Argonaut PS1 
 
 > Please use Python >= 3.7
 
-> Check that the assets you seek are not already extracted on [PS1-BRender-Assets](https://github.com/OverSurge/PS1-BRender-Assets) before using ps1_brender_reverse.py.  
+> Check that the assets you seek are not already extracted on [PS1-Argonaut-Assets](https://github.com/OverSurge/PS1-Argonaut-Assets) before using assets_export.py.  
 > If they are not, it most probably means that they are not extractable or too experimental for now.
 
 1. (Optional) Create a virtual environment (venv) and activate it.
 2. Install the required Python packages: `pip install -r requirements.txt`.
 3. You can now launch the scripts, there are 2 at the moment:
 
-- dat_slicing.py: Extracts all files (like WADs) from raw game files (.DIR/.DAT).
-- ps1_argonaut_reverse.py: Processes raw game files or WADs and extract assets from them.
+- extract_files_from_dat.py: Extracts all files (like WADs) from raw game files (.DIR/.DAT).
+- export_assets.py: Extracts assets (textures, music, levels, etc) from raw game files or WADs.
 
 ## Disclaimers
 
