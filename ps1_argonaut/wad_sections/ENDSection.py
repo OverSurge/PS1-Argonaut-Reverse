@@ -2,6 +2,7 @@ import math
 from io import BufferedIOBase
 
 from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.utils import pad_out_2048_bytes
 from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.SPSX.SPSXFlags import SPSXFlags
 from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
@@ -33,3 +34,18 @@ class ENDSection(BaseWADSection):
 
             cls.check_size(size, start, data_in.tell())
         return cls(spsx_section)
+
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+        start = super().serialize(data_out, conf)
+        if SPSXFlags.HAS_LEVEL_SFX in self.spsx_section.spsx_flags:
+            self.spsx_section.level_sound_effects_groups.serialize_vags(data_out, conf)
+
+        pad_out_2048_bytes(data_out)
+        self.spsx_section.dialogues_bgms.serialize_vags(data_out, conf)
+
+        if conf.game == G.HARRY_POTTER_2_PS1:
+            pad_out_2048_bytes(data_out)
+
+        size = data_out.tell() - start
+        data_out.seek(start - 4)
+        data_out.write(size.to_bytes(4, 'little'))

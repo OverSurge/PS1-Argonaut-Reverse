@@ -8,7 +8,7 @@ from ps1_argonaut.errors_warnings import SectionNameError, SectionSizeMismatch, 
 
 class BaseDataClass:
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration):  # TODO args & kwargs
         pass
 
     def serialize(self, data_out: BufferedIOBase, conf: Configuration):
@@ -21,7 +21,7 @@ class BaseWADSection(BaseDataClass):
     codename_str: str
     codename_bytes: bytes
 
-    def __init__(self, data=None):
+    def __init__(self, data: bytes = None):
         if data is not None:
             self._data = data
 
@@ -52,10 +52,17 @@ class BaseWADSection(BaseDataClass):
         return data_out.tell()
 
     @classmethod
-    def fallback_parse(cls, data_in: BufferedIOBase):
+    def fallback_parse_data(cls, data_in: BufferedIOBase):
+        start = data_in.tell()
         codename = data_in.read(4)
         size = data_in.read(4)
-        return cls(codename + size + data_in.read(int.from_bytes(size, 'little')))
+        data = codename + size + data_in.read(int.from_bytes(size, 'little'))
+        data_in.seek(start)
+        return data
+
+    @classmethod
+    def fallback_parse(cls, data_in: BufferedIOBase):
+        return cls(cls.fallback_parse_data(data_in))
 
     def fallback_serialize(self, data_out: BufferedIOBase):
         data_out.write(self._data)

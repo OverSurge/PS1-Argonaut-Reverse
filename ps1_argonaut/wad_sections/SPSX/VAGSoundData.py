@@ -32,6 +32,9 @@ class VAGSoundData(BaseDataClass):
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, size: int, channels: int, sampling_rate: int):
         return cls(data_in.read(size), channels, sampling_rate, conf)
 
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+        data_out.write(self.data)
+
     def to_vag(self, with_headers: bool = True):
         header_size = 0 if with_headers else 48
         header = b"VAGp\x00\x00\x00\x00\x00\x00\x00\x00" + (self.size // self.n_channels).to_bytes(4, 'big') + \

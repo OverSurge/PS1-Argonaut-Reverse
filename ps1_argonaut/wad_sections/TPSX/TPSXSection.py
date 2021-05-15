@@ -12,13 +12,14 @@ class TPSXSection(BaseWADSection):
     supported_games = PARSABLE_GAMES
     section_content_description = "textures"
 
-    def __init__(self, titles: Tuple[str], texture_file: TextureFile):
-        super().__init__()
+    def __init__(self, titles: Tuple[str], texture_file: TextureFile, fallback_data: bytes = None):
+        super().__init__(fallback_data)
         self.titles = titles
         self.texture_file = texture_file
 
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+        fallback_data = cls.fallback_parse_data(data_in)
         size, start = super().parse(data_in, conf)
         if conf.game == G.CROC_2_DEMO_PS1_DUMMY:
             has_legacy_textures = False
@@ -40,4 +41,4 @@ class TPSXSection(BaseWADSection):
         texture_file = TextureFile.parse(data_in, conf, start + size, has_legacy_textures)
 
         cls.check_size(size, start, data_in.tell())
-        return cls(titles, texture_file)
+        return cls(titles, texture_file, fallback_data)

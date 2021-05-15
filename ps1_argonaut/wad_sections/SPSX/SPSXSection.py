@@ -4,6 +4,7 @@ from struct import pack
 from typing import Optional
 
 from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.utils import round_up_padding
 from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.SPSX.SPSXFlags import SPSXFlags
 from ps1_argonaut.wad_sections.SPSX.SoundContainers import CommonSoundEffectsContainer, AmbientContainer, \
@@ -22,13 +23,15 @@ class SPSXSection(BaseWADSection):
                  idk2: int, n_ff_groups: int, dialogues_bgms: DialoguesBGMsContainer):
         super().__init__()
         self.spsx_flags = spsx_flags
-        self.common_sound_effects = common_sound_effects
-        self.ambient_tracks = ambient_tracks
-        self.level_sound_effects_groups = level_sound_effects_groups
+        self.common_sound_effects = common_sound_effects \
+            if common_sound_effects is not None else CommonSoundEffectsContainer()
+        self.ambient_tracks = ambient_tracks if ambient_tracks is not None else AmbientContainer()
+        self.level_sound_effects_groups = level_sound_effects_groups \
+            if level_sound_effects_groups is not None else LevelSoundEffectsContainer()
         self.idk1 = idk1
         self.idk2 = idk2
         self.n_ff_groups = n_ff_groups
-        self.dialogues_bgms = dialogues_bgms
+        self.dialogues_bgms = dialogues_bgms if dialogues_bgms is not None else DialoguesBGMsContainer()
 
     @property
     def size(self):
@@ -38,6 +41,10 @@ class SPSXSection(BaseWADSection):
                8 * (SPSXFlags.HAS_COMMON_SFX_AND_DIALOGUES_BGMS in self.spsx_flags) + 16 * self.n_dialogues_bgms + \
                self.common_sound_effects_size + 4 * (SPSXFlags.HAS_AMBIENT_TRACKS in self.spsx_flags) + \
                self.ambient_tracks_size
+
+    @property
+    def n_sounds(self):
+        return self.n_common_sound_effects + self.n_ambient_tracks + self.n_level_sound_effects + self.n_dialogues_bgms
 
     @property
     def n_common_sound_effects(self):
@@ -69,7 +76,7 @@ class SPSXSection(BaseWADSection):
 
     @property
     def end_gap(self):
-        return 0  # FIXME Needs to be re-calculated
+        return sum(round_up_padding(group.size) for group in self.level_sound_effects_groups)
 
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration):
@@ -80,9 +87,7 @@ class SPSXSection(BaseWADSection):
         # Bit 0 and 4 are identical
         assert (SPSXFlags.HAS_AMBIENT_TRACKS in spsx_flags) == (SPSXFlags.HAS_AMBIENT_TRACKS_ in spsx_flags)
 
-        logging.debug(f"Flags: {spsx_flags}|Level sound effects: {spsx_flags.HAS_LEVEL_SFX}|"
-                      f"Common sound effects: {spsx_flags.HAS_COMMON_SFX_AND_DIALOGUES_BGMS}|"
-                      f"Ambient tracks: {spsx_flags.HAS_AMBIENT_TRACKS}")
+        logging.debug(f"Flags: {str(spsx_flags)}")
 
         n_sound_effects = int.from_bytes(data_in.read(4), 'little')
         logging.debug(f"sound effects count: {n_sound_effects}")
@@ -122,7 +127,7 @@ class SPSXSection(BaseWADSection):
             # Gap between level sound effects and dialogues/BGMs
             end_gap = int.from_bytes(data_in.read(4), 'little')
             assert (end_gap != 0) == (SPSXFlags.HAS_LEVEL_SFX in spsx_flags)
-            logging.debug(f"DNE (END) gap: {end_gap}")
+            logging.debug(f"END (DNE) gap: {end_gap}")
 
             dialogues_bgms = DialoguesBGMsContainer(
                 DialogueBGMSound.parse(data_in, conf) for _ in range(n_dialogues_bgms))
@@ -169,6 +174,8 @@ class SPSXSection(BaseWADSection):
             for vag in self.ambient_tracks.vags:
                 data_out.write(vag.data)
 
-        size = data_out.tell() - start
+        end = data_out.tell()
+        size = end - start
         data_out.seek(start - 4)
         data_out.write(size.to_bytes(4, 'little'))
+        data_out.seek(end)

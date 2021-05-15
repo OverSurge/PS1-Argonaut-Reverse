@@ -33,6 +33,9 @@ class Sound(BaseDataClass):
     def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
         del self._size
 
+    def serialize_vag(self, data_out: BufferedIOBase, conf: Configuration):
+        self.vag.serialize(data_out, conf)
+
 
 class _AmbientOrEffectSound(Sound):
     struct = Struct('<IHHI2s2sI')
@@ -85,24 +88,23 @@ class EffectSound(_AmbientOrEffectSound):
 class DialogueBGMSound(Sound):
     struct = Struct('<IHH4sI')
 
-    def __init__(self, end_section_offset: int, sampling_rate: int, flags: DialoguesBGMsSoundFlags, uk1: bytes,
-                 size: int, vag: VAGSoundData = None):
+    def __init__(self, sampling_rate: int, flags: DialoguesBGMsSoundFlags, uk1: bytes, size: int,
+                 vag: VAGSoundData = None):
         super().__init__(sampling_rate, flags, vag, size)
-        self.end_section_offset = end_section_offset
         self.uk1 = uk1
 
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration):
-        end_section_offset = int.from_bytes(data_in.read(4), 'little')
+        data_in.seek(4, SEEK_CUR)  # END section offset
         sampling_rate = (int.from_bytes(data_in.read(2), 'little') * 44100) // 4096
         flags = DialoguesBGMsSoundFlags(int.from_bytes(data_in.read(2), 'little'))
         uk1 = data_in.read(4)
         size = int.from_bytes(data_in.read(4), 'little')
-        return cls(end_section_offset, sampling_rate, flags, uk1, size)
+        return cls(sampling_rate, flags, uk1, size)
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
-        data_out.write(self.struct.pack(self.end_section_offset, (self.sampling_rate * 4096) // 44100, self.flags.value,
-                                        self.uk1, self.size))
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, **kwargs):
+        data_out.write(self.struct.pack(kwargs['end_section_offset'], (self.sampling_rate * 4096) // 44100,
+                                        self.flags.value, self.uk1, self.size))
 
     def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
         self.vag = VAGSoundData.parse(data_in, conf, self._size,

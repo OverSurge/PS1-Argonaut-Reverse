@@ -3,7 +3,7 @@ from io import BytesIO, SEEK_CUR, StringIO, BufferedIOBase
 from pathlib import Path
 from typing import Dict, Union, Optional
 
-from ps1_argonaut.configuration import Configuration, wavefront_header
+from ps1_argonaut.configuration import Configuration, wavefront_header, G
 from ps1_argonaut.errors_warnings import SectionNameError
 from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
@@ -15,7 +15,7 @@ from ps1_argonaut.wad_sections.SPSX.Sounds import DialoguesBGMsSoundFlags
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
-class WAD(dict[bytes, BaseWADSection]):
+class WAD(Dict[bytes, BaseWADSection]):
     sections_conf: Dict[bytes, BaseWADSection] = {
         TPSXSection.codename_bytes: TPSXSection, SPSXSection.codename_bytes: SPSXSection,
         DPSXSection.codename_bytes: DPSXSection, PORTSection.codename_bytes: PORTSection,
@@ -200,8 +200,7 @@ class WAD(dict[bytes, BaseWADSection]):
                     break
 
         if isinstance(file_path_or_data, Path):
-            with open(file_path_or_data, 'rb') as file:
-                data_in = BytesIO(file.read())
+            data_in = BytesIO(file_path_or_data.read_bytes())
         elif isinstance(file_path_or_data, bytes):
             data_in = BytesIO(file_path_or_data)
         else:
@@ -211,30 +210,38 @@ class WAD(dict[bytes, BaseWADSection]):
         parse_sections()
 
         for codename_bytes, offset in sections_offsets.items():
+            data_in.seek(offset)
             if codename_bytes in cls.sections_conf:
                 section = cls.sections_conf[codename_bytes]
-                if section.codename_str in conf.parse_sections:
-                    data_in.seek(offset)
+                if conf.game in section.supported_games:
                     if codename_bytes != ENDSection.codename_bytes:
                         sections[codename_bytes] = section.parse(data_in, conf)
                     else:
                         sections[codename_bytes] = section.parse(data_in, conf,
                                                                  spsx_section=sections[SPSXSection.codename_bytes])
+                else:
+                    sections[codename_bytes] = BaseWADSection.fallback_parse(data_in)
             else:
                 sections[codename_bytes] = BaseWADSection.fallback_parse(data_in)
 
         data_in.close()
         return cls(sections)
 
-    def serialize(self, file_path_or_data: Union[Path, BufferedIOBase], conf: Configuration):
-        data_out = file_path_or_data if isinstance(file_path_or_data, BufferedIOBase) else BytesIO()
-
+    def serialize(self, file_path_or_data_out: Union[Path, BufferedIOBase], conf: Configuration):
+        data_out = file_path_or_data_out if isinstance(file_path_or_data_out, BufferedIOBase) else BytesIO()
+        data_out.write(b'\x00\x00\x00\x00')
         for section in self.values():
-            if type(section) is BaseWADSection:
+            if section.serialize.__func__ is BaseWADSection.serialize:
                 section.fallback_serialize(data_out)
             else:
                 section.serialize(data_out, conf)
 
-        if isinstance(file_path_or_data, Path):
-            with open(file_path_or_data, 'wb') as output_file:
-                output_file.write(data_out.read())
+        if isinstance(file_path_or_data_out, Path):
+            with open(file_path_or_data_out, 'wb') as output_file:
+                data_out.seek(0)
+                data = data_out.read()[4:]
+                size = len(data) + 4
+                if conf.game in (G.CROC_2_PS1, G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1):
+                    size += 2048
+                output_file.write(size.to_bytes(4, 'little'))
+                output_file.write(data)
