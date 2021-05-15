@@ -18,7 +18,7 @@ class TPSXSection(BaseWADSection):
         self.texture_file = texture_file
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         fallback_data = cls.fallback_parse_data(data_in)
         size, start = super().parse(data_in, conf)
         if conf.game == G.CROC_2_DEMO_PS1_DUMMY:
@@ -38,7 +38,7 @@ class TPSXSection(BaseWADSection):
                 data_in.seek(2052, SEEK_CUR)
             else:
                 titles = ()
-        texture_file = TextureFile.parse(data_in, conf, start + size, has_legacy_textures)
+        texture_file = TextureFile.parse(data_in, conf, has_legacy_textures=has_legacy_textures, end=start + size)
 
         cls.check_size(size, start, data_in.tell())
         return cls(titles, texture_file, fallback_data)

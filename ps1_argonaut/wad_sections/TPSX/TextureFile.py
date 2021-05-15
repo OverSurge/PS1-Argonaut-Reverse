@@ -23,10 +23,10 @@ class TextureFile(BaseDataClass):
         self.n_rows = n_rows
         self.raw_texture = raw_texture
 
-    # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration, end: int, has_legacy_textures: bool):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
+        has_legacy_textures = kwargs['has_legacy_textures']
         rle = conf.game in (G.CROC_2_PS1, G.CROC_2_DEMO_PS1, G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
 
         textures: List[TextureData] = []
@@ -55,7 +55,7 @@ class TextureFile(BaseDataClass):
             data_in.seek(15360, SEEK_CUR)
         if rle:
             raw = bytearray()
-            while data_in.tell() < end:
+            while data_in.tell() < kwargs['end']:
                 run = int.from_bytes(data_in.read(cls.rle_size), 'little', signed=True)
                 if run < 0:
                     raw += data_in.read(cls.rle_size) * abs(run)

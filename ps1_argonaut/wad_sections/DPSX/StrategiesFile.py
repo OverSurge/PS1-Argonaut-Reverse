@@ -11,7 +11,7 @@ class StrategiesFile(BaseDataClass):
         self.strategies = strategies
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         n_strategies = int.from_bytes(data_in.read(4), 'little')
         strategies = [StrategyData.parse(data_in, conf) for _ in range(n_strategies)]

@@ -23,7 +23,7 @@ class DPSXSection(BaseWADSection):
         self.level_file = level_file
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         fallback_data = super().fallback_parse_data(data_in)
         size, start = super().parse(data_in, conf)
         idk1 = data_in.read(4)

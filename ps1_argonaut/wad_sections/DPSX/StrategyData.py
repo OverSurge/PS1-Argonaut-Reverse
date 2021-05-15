@@ -13,7 +13,7 @@ class StrategyData(BaseDataClass):
         return len(self.data)
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         size = 4 * int.from_bytes(data_in.read(4), 'little')
         return cls(data_in.read(size))

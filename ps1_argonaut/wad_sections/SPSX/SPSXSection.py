@@ -79,7 +79,7 @@ class SPSXSection(BaseWADSection):
         return sum(round_up_padding(group.size) for group in self.level_sound_effects_groups)
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         size, start = super().parse(data_in, conf)
 
         spsx_flags: SPSXFlags = SPSXFlags(int.from_bytes(data_in.read(4), 'little'))
@@ -147,7 +147,7 @@ class SPSXSection(BaseWADSection):
         return cls(spsx_flags, common_sound_effects, ambient_tracks, level_sound_effects_groups, idk1, idk2,
                    n_ff_groups, dialogues_bgms)
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         start = super().serialize(data_out, conf)
 
         data_out.write(pack('<II', self.spsx_flags, self.n_common_sound_effects))

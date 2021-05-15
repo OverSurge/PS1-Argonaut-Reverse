@@ -13,7 +13,7 @@ class Model3DHeader(BaseDataClass):
         self.n_bounding_box_info = n_bounding_box_info
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         data_in.seek(72, SEEK_CUR)
         n_vertices = int.from_bytes(data_in.read(4), 'little')

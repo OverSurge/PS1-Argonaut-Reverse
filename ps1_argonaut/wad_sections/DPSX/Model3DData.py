@@ -44,10 +44,11 @@ class BaseModel3DData(BaseDataClass):
     def n_bounding_box_info(self):
         return self.header.n_bounding_box_info
 
-    # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration, header: Model3DHeader, is_world_model_3d: bool):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
+        header = kwargs['header']
+        is_world_model_3d = kwargs['is_world_model_3d']
 
         def parse_vertices_normals(mode: int):
             res = []
@@ -202,15 +203,13 @@ class BaseModel3DData(BaseDataClass):
 
 
 class Model3DData(BaseModel3DData):
-    # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         header = Model3DHeader.parse(data_in, conf)
-        return super().parse(data_in, conf, header, False)
+        return super().parse(data_in, conf, header=header, is_world_model_3d=False)
 
 
 class LevelGeom3DData(BaseModel3DData):
-    # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration, header: Model3DHeader):
-        return super().parse(data_in, conf, header, True)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
+        return super().parse(data_in, conf, header=kwargs['header'], is_world_model_3d=True)

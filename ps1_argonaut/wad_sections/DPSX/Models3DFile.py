@@ -15,7 +15,7 @@ class Models3DFile(BaseDataClass):
         return self.models[item]
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         n_models = int.from_bytes(data_in.read(4), 'little')
         models: List[Model3DData] = []

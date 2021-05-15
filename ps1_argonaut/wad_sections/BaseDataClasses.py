@@ -8,10 +8,10 @@ from ps1_argonaut.errors_warnings import SectionNameError, SectionSizeMismatch, 
 
 class BaseDataClass:
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):  # TODO args & kwargs
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         pass
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         pass
 
 
@@ -38,13 +38,13 @@ class BaseWADSection(BaseDataClass):
             raise SectionSizeMismatch(current_position, cls.codename_str, expected_size, calculated_size)
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         if conf.game not in cls.supported_games:
             raise UnsupportedParsing(cls.section_content_description)
         cls.check_codename(data_in)
         return int.from_bytes(data_in.read(4), 'little'), data_in.tell()
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         if conf.game not in self.supported_games:
             raise UnsupportedSerialization(self.section_content_description)
         data_out.write(self.codename_bytes)

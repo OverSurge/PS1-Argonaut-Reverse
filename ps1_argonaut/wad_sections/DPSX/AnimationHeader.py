@@ -24,7 +24,7 @@ class AnimationHeader(BaseDataClass):
         self.sub_frame_size = 24 if old_animation_format else 16
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         n_flags: int = int.from_bytes(data_in.read(4), 'little')
         data_in.seek(4, SEEK_CUR)

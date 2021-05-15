@@ -18,7 +18,7 @@ class AnimationsFile(BaseDataClass):
         return self.animations[item]
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         n_animations: int = int.from_bytes(data_in.read(4), 'little')
         animations = [AnimationData.parse(data_in, conf) for _ in range(n_animations)]

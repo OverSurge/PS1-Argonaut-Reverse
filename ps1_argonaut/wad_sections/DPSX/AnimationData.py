@@ -23,7 +23,7 @@ class AnimationData(BaseDataClass):
         return self.header.n_vertices_groups
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         header = AnimationHeader.parse(data_in, conf)
 

@@ -18,10 +18,11 @@ class ENDSection(BaseWADSection):
         super().__init__()
         self.spsx_section = spsx_section
 
-    # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration, spsx_section: SPSXSection):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         size, start = super().parse(data_in, conf)
+        spsx_section = kwargs['spsx_section']
+
         if size != 0:
             if SPSXFlags.HAS_LEVEL_SFX in spsx_section.spsx_flags:
                 spsx_section.level_sound_effects_groups.parse_vags(data_in, conf)
@@ -35,7 +36,7 @@ class ENDSection(BaseWADSection):
             cls.check_size(size, start, data_in.tell())
         return cls(spsx_section)
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         start = super().serialize(data_out, conf)
         if SPSXFlags.HAS_LEVEL_SFX in self.spsx_section.spsx_flags:
             self.spsx_section.level_sound_effects_groups.serialize_vags(data_out, conf)

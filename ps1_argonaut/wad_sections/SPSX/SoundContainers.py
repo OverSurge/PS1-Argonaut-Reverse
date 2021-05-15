@@ -56,7 +56,7 @@ class LevelSoundEffectsGroupContainer(SoundsContainer, BaseDataClass):
         return sum(sound.size for sound in self)
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         data_in.seek(4, SEEK_CUR)  # Group header offset
         n_sound_effects = int.from_bytes(data_in.read(4), 'little')
         data_in.seek(8, SEEK_CUR)  # End offset (4 bytes) | Sum of group VAGs' sizes (4 bytes)
@@ -94,7 +94,7 @@ class LevelSoundEffectsContainer(List[LevelSoundEffectsGroupContainer], BaseData
     def vags(self):
         return [sound.vag for group in self for sound in group]
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         group_header_offset = 0
         end_offset = 0
         for group in self:

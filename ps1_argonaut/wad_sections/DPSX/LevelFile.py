@@ -13,11 +13,12 @@ class LevelFile(BaseDataClass):
         self.chunks_matrix = chunks_matrix
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
         n_chunk_models = int.from_bytes(data_in.read(4), 'little')
         _chunk_model_headers = [Model3DHeader.parse(data_in, conf) for _ in range(n_chunk_models)]
-        chunk_models = [LevelGeom3DData.parse(data_in, conf, _chunk_model_headers[i]) for i in range(n_chunk_models)]
+        chunk_models = [LevelGeom3DData.parse(data_in, conf, header=_chunk_model_headers[i])
+                        for i in range(n_chunk_models)]
         if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
             data_in.seek(8, SEEK_CUR)
         n_sub_chunks = int.from_bytes(data_in.read(4), 'little')

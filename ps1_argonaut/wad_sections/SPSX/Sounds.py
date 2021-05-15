@@ -50,7 +50,7 @@ class _AmbientOrEffectSound(Sound):
         self.uk2 = uk2
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         sampling_rate = int.from_bytes(data_in.read(4), 'little')
         data_in.seek(2, SEEK_CUR)  # "Compressed" sampling rate, see SPSX's documentation
         volume_level = int.from_bytes(data_in.read(2), 'little')
@@ -60,24 +60,24 @@ class _AmbientOrEffectSound(Sound):
         size = int.from_bytes(data_in.read(4), 'little')
         return cls(sampling_rate, volume_level, flags, uk1, uk2, size)
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         data_out.write(self.struct.pack(self.sampling_rate, (self.sampling_rate * 4096) // 44100, self.volume_level,
                                         self.flags.value, self.uk1, self.uk2, self.size))
 
     def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
-        self.vag = VAGSoundData.parse(data_in, conf, self._size, MONO, self.sampling_rate)
+        self.vag = VAGSoundData.parse(data_in, conf, size=self._size, n_channels=MONO, sampling_rate=self.sampling_rate)
         super().parse_vag(data_in, conf)
 
 
 class AmbientSound(_AmbientOrEffectSound):
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         data_out.write(self.struct.pack(self.sampling_rate, (self.sampling_rate * 4096) // 48000, self.volume_level,
                                         self.flags.value, self.uk1, self.uk2, self.size))
 
 
 class EffectSound(_AmbientOrEffectSound):
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         res = super().parse(data_in, conf)
         assert (res.flags & 0x000000FF).value in cls.known_values_1st_flags_byte
         assert (res.flags & 0x00FFFF00).value in cls.known_values_2nd_2rd_flags_bytes
@@ -94,7 +94,7 @@ class DialogueBGMSound(Sound):
         self.uk1 = uk1
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         data_in.seek(4, SEEK_CUR)  # END section offset
         sampling_rate = (int.from_bytes(data_in.read(2), 'little') * 44100) // 4096
         flags = DialoguesBGMsSoundFlags(int.from_bytes(data_in.read(2), 'little'))
@@ -102,12 +102,12 @@ class DialogueBGMSound(Sound):
         size = int.from_bytes(data_in.read(4), 'little')
         return cls(sampling_rate, flags, uk1, size)
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration, **kwargs):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         data_out.write(self.struct.pack(kwargs['end_section_offset'], (self.sampling_rate * 4096) // 44100,
                                         self.flags.value, self.uk1, self.size))
 
     def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
-        self.vag = VAGSoundData.parse(data_in, conf, self._size,
-                                      STEREO if DialoguesBGMsSoundFlags.HAS_INTERLEAVED_STEREO in self.flags else MONO,
-                                      self.sampling_rate)
+        self.vag = VAGSoundData.parse(data_in, conf, size=self._size, n_channels=
+        STEREO if DialoguesBGMsSoundFlags.HAS_INTERLEAVED_STEREO in self.flags else MONO,
+                                      sampling_rate=self.sampling_rate)
         super().parse_vag(data_in, conf)

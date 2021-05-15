@@ -29,7 +29,7 @@ class PORTSection(BaseWADSection):
         return sum(len(zone) for zone in self.chunks_zones)
 
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration):
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         fallback_data = cls.fallback_parse_data(data_in)
         size, start = super().parse(data_in, conf)
         n_zones = int.from_bytes(data_in.read(4), 'little')

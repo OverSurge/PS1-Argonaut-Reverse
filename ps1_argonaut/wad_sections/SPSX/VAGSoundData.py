@@ -27,12 +27,11 @@ class VAGSoundData(BaseDataClass):
     def size(self):
         return len(self.data)
 
-    # noinspection PyMethodOverriding
     @classmethod
-    def parse(cls, data_in: BufferedIOBase, conf: Configuration, size: int, channels: int, sampling_rate: int):
-        return cls(data_in.read(size), channels, sampling_rate, conf)
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
+        return cls(data_in.read(kwargs['size']), kwargs['n_channels'], kwargs['sampling_rate'], conf)
 
-    def serialize(self, data_out: BufferedIOBase, conf: Configuration):
+    def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         data_out.write(self.data)
 
     def to_vag(self, with_headers: bool = True):
