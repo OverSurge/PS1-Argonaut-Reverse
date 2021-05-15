@@ -31,8 +31,8 @@ Therefore, this documentation and these tools cannot work with all Argonaut PS1 
 2. Install the required Python packages: `pip install -r requirements.txt`.
 3. You can now launch the scripts, there are 2 at the moment:
 
-- dat_slicing.py: Extracts all files (like WADs) from raw game files (.DIR/.DAT).
-- assets_export.py: Processes raw game files or WADs and extract assets from them.
+- extract_files_from_dat.py: Extracts all files (like WADs) from raw game files (.DIR/.DAT).
+- export_assets.py: Extracts assets (textures, music, levels, etc) from raw game files or WADs.
 
 ## Disclaimers
 
