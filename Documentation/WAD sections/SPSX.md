@@ -14,7 +14,7 @@ This is what SPSX and END look like with all possible tracks. Depending on the S
 > BGM stands for "BackGround Music"
 
 ````
-             SPSX                                END
+             SPSX                                   END
  ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐         ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
  │ SPSX header               │         │ Level sound effects VAGs  │
  │ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ │         │ (2048-bytes aligned *)    │
@@ -127,15 +127,15 @@ On your hex editor, the bits are in this order:
 
 > '**lec**' = sum of all groups' sound effects count, see [Level sound effects groups descriptors](#Level-sound-effects-groups-descriptors)
 
-| Offset (h) | Size (h)        | Usage                                                        | Notes                     |
-| :--------- | :-------------- | :----------------------------------------------------------- | :------------------------ |
-| 0x0        | 0x4             | Level sound effects groups count                             | Abbreviated to '**legc**' |
-| 0x4        | 0x4             | **UNKNOWN**                                                  |                           |
-| 0x8        | 0x4             | **UNKNOWN**                                                  |                           |
-| 0xC        | 0x4             | FF groups count                                              | Abbreviated to '**fgc**'  |
-| 0x10       | 0x10 × **legc** | [Level sound effects groups descriptors](#Level-sound-effects-groups-descriptors) |                           |
-| +0x0       | 0x14 × **lec**  | [Level sound effects descriptors](#Level-sound-effects-descriptors) |                           |
-| ++0x0      | 0x10 × **fgc**  | **UNKNOWN**                                                  | FF groups                 |
+| Offset (h) | Size (h)         | Usage                                                        | Notes                      |
+| :--------- | :--------------- | :----------------------------------------------------------- | :------------------------- |
+| 0x0        | 0x4              | Level sound effects groups count                             | Abbreviated to '**legc**'  |
+| 0x4        | 0x4              | **UNKNOWN**                                                  |                            |
+| 0x8        | 0x4              | **UNKNOWN**                                                  |                            |
+| 0xC        | 0x4              | Unique level sound effects count                             | Abbreviated to '**ulsec**' |
+| 0x10       | 0x10 × **legc**  | [Level sound effects groups descriptors](#Level-sound-effects-groups-descriptors) |                            |
+| +0x0       | 0x14 × **lec**   | [Level sound effects descriptors](#Level-sound-effects-descriptors) |                            |
+| ++0x0      | 0x10 × **ulsec** | [Unique level sound effects structure](#Unique-level-sound-effects-structure) |                            |
 
 #### Level sound effects groups descriptors
 
@@ -175,6 +175,30 @@ On your hex editor, the bits are in this order:
 | 1    | **UNSURE**         | Never set when 0th bit is set (on stereo tracks that is)     |
 | 2    | Background music   | If set, the track is intended for background music use       |
 | 3-15 | ∅ Empty            |                                                              |
+
+#### Unique level sound effects structure
+
+This structure seems to list duplicated level sound effects. Each row represents an unique level sound effect. Each column represents a level sound effect group.
+
+Values are either FF when empty or a level sound effect index (inside its group, not a global index).
+
+There are always 16 columns, the first one being empty. We can then assume that there can be at most 15 level sound effect groups in one level.
+
+##### Example:
+
+| Empty | 0th group | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | 14th group |
+| :---- | --------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---------- |
+| FF    | FF        | FF   | 00   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF         |
+| FF    | 00        | 01   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF         |
+| FF    | FF        | 00   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF         |
+
+This level has 4 level sound effects, 3 groups and 3 unique level sound effects.
+
+The 0th level sound effect of the 2nd group is unique to this level.
+
+The 0th level sound effect of the 0th group and the 1st level sound effect of the 1st group are identical.
+
+The 0th level sound effect of the 1st group is unique to this level.
 
 ## Footnotes
 
