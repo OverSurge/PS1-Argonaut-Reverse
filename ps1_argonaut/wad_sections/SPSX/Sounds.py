@@ -13,7 +13,7 @@ class SoundEffectsAmbientFlags(IntFlag):
 
 
 class DialoguesBGMsSoundFlags(IntFlag):
-    HAS_INTERLEAVED_STEREO = 0x1
+    IS_STEREO = 0x1
     IS_BACKGROUND_MUSIC = 0x4
 
 
@@ -107,7 +107,6 @@ class DialogueBGMSound(Sound):
                                         self.flags.value, self.uk1, self.size))
 
     def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
-        self.vag = VAGSoundData.parse(data_in, conf, size=self._size, n_channels=
-        STEREO if DialoguesBGMsSoundFlags.HAS_INTERLEAVED_STEREO in self.flags else MONO,
-                                      sampling_rate=self.sampling_rate)
+        self.vag = VAGSoundData.parse(data_in, conf, size=self._size, sampling_rate=self.sampling_rate,
+                                      n_channels=STEREO if DialoguesBGMsSoundFlags.IS_STEREO in self.flags else MONO)
         super().parse_vag(data_in, conf)

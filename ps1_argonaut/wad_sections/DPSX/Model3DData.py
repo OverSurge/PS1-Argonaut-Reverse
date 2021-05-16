@@ -47,8 +47,8 @@ class BaseModel3DData(BaseDataClass):
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
-        header = kwargs['header']
-        is_world_model_3d = kwargs['is_world_model_3d']
+        header: Model3DHeader = kwargs['header']
+        is_world_model_3d: bool = kwargs['is_world_model_3d']
 
         def parse_vertices_normals(mode: int):
             res = []

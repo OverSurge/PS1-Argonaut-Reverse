@@ -35,7 +35,7 @@ class SoundsContainer(List[Sound]):
             sound.serialize_vag(data_in, conf)
 
 
-class CommonSoundEffectsContainer(SoundsContainer):
+class CommonSFXContainer(SoundsContainer):
     pass
 
 
@@ -43,7 +43,7 @@ class AmbientContainer(SoundsContainer):
     pass
 
 
-class LevelSoundEffectsGroupContainer(SoundsContainer, BaseDataClass):
+class LevelSFXGroupContainer(SoundsContainer, BaseDataClass):
     struct = Struct('<4I')
 
     def __init__(self, sounds: Iterable[Sound] = None, n_sound_effects: int = None):
@@ -74,12 +74,12 @@ class LevelSoundEffectsGroupContainer(SoundsContainer, BaseDataClass):
             sound.serialize(data_out, conf)
 
 
-class LevelSoundEffectsContainer(List[LevelSoundEffectsGroupContainer], BaseDataClass):
-    def __init__(self, groups: Iterable[LevelSoundEffectsGroupContainer] = None):
+class LevelSFXContainer(List[LevelSFXGroupContainer], BaseDataClass):
+    def __init__(self, groups: Iterable[LevelSFXGroupContainer] = None):
         super().__init__(groups if groups is not None else [])
 
     @property
-    def n_sound_effects(self):
+    def n_sounds(self):
         return sum(len(group) for group in self)
 
     @property
@@ -101,6 +101,10 @@ class LevelSoundEffectsContainer(List[LevelSoundEffectsGroupContainer], BaseData
             group.serialize(data_out, conf, group_header_offset=group_header_offset, end_offset=end_offset)
             group_header_offset += 20 * len(group)
             end_offset += round_up_padding(group.size)
+
+    def parse_groups(self, data_in: BufferedIOBase, conf: Configuration):
+        for group in self:
+            group.parse_children(data_in, conf)
 
     def parse_vags(self, data_in: BufferedIOBase, conf: Configuration):
         for group in self:

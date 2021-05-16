@@ -21,11 +21,11 @@ class ENDSection(BaseWADSection):
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         size, start = super().parse(data_in, conf)
-        spsx_section = kwargs['spsx_section']
+        spsx_section: SPSXSection = kwargs['spsx_section']
 
         if size != 0:
             if SPSXFlags.HAS_LEVEL_SFX in spsx_section.spsx_flags:
-                spsx_section.level_sound_effects_groups.parse_vags(data_in, conf)
+                spsx_section.level_sfx_groups.parse_vags(data_in, conf)
 
             data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
             spsx_section.dialogues_bgms.parse_vags(data_in, conf)
@@ -39,7 +39,7 @@ class ENDSection(BaseWADSection):
     def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         start = super().serialize(data_out, conf)
         if SPSXFlags.HAS_LEVEL_SFX in self.spsx_section.spsx_flags:
-            self.spsx_section.level_sound_effects_groups.serialize_vags(data_out, conf)
+            self.spsx_section.level_sfx_groups.serialize_vags(data_out, conf)
 
         pad_out_2048_bytes(data_out)
         self.spsx_section.dialogues_bgms.serialize_vags(data_out, conf)

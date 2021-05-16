@@ -54,7 +54,7 @@ class WAD(Dict[bytes, BaseWADSection]):
 
     @property
     def common_sound_effects(self):
-        return None if (self.spsx is None) else self.spsx.common_sound_effects
+        return None if (self.spsx is None) else self.spsx.common_sfx
 
     @property
     def ambient_tracks(self):
@@ -74,7 +74,7 @@ class WAD(Dict[bytes, BaseWADSection]):
 
     @property
     def level_sound_effects(self):
-        return None if (self.end is None) else self.spsx.level_sound_effects_groups
+        return None if (self.end is None) else self.spsx.level_sfx_groups.sounds
 
     @property
     def dialogues_bgms(self):
@@ -139,9 +139,8 @@ class WAD(Dict[bytes, BaseWADSection]):
 
     def export_audio(self, folder_path: Path, wad_filename: str):
         if self.spsx:
-            mono_sounds = {'effect': self.spsx.common_sound_effects,
-                           'ambient': self.spsx.ambient_tracks,
-                           'level_effect': self.spsx.level_sound_effects_groups}
+            mono_sounds = {'effect': self.spsx.common_sfx, 'ambient': self.spsx.ambient_tracks,
+                           'level_effect': self.spsx.level_sfx_groups}
             for prefix, sounds in mono_sounds.items():
                 for i, vag in enumerate(sounds.vags):
                     filename = f"{wad_filename}_{prefix}_{i}"
