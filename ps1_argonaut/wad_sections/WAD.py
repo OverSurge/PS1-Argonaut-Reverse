@@ -6,6 +6,7 @@ from typing import Dict, Union, Optional
 from ps1_argonaut.configuration import Configuration, wavefront_header, G
 from ps1_argonaut.errors_warnings import SectionNameError
 from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
+from ps1_argonaut.wad_sections.DPSX.ChunkClasses import ChunkHolder
 from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
 from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
 from ps1_argonaut.wad_sections.ENDSection import ENDSection
@@ -73,8 +74,12 @@ class WAD(Dict[bytes, BaseWADSection]):
         return None if (self.dpsx is None) else self.dpsx.level_file.chunks_matrix
 
     @property
-    def level_sound_effects(self):
+    def flattened_level_sfx(self):
         return None if (self.end is None) else self.spsx.level_sfx_groups.sounds
+
+    @property
+    def level_sfx(self):
+        return None if (self.end is None) else self.spsx.level_sfx_groups
 
     @property
     def dialogues_bgms(self):
@@ -172,10 +177,10 @@ class WAD(Dict[bytes, BaseWADSection]):
             for texture in self.textures:
                 for j in range(4):
                     obj.write(f"vt {texture.coords[j][0] / 1024} {(1024 - texture.coords[j][1]) / 1024}\n")
-            for i, chunk_holder in enumerate(self.dpsx.level_file.chunks_matrix.chunks_holders):
-                if chunk_holder.sub_chunks:
+            for i, chunk_holder in enumerate(self.dpsx.level_file.chunks_matrix):  # type: int, ChunkHolder
+                if chunk_holder:
                     x, z = self.dpsx.level_file.chunks_matrix.x_z_coords(i)
-                    for chunk in chunk_holder.sub_chunks:
+                    for chunk in chunk_holder:
                         cm = chunk.model_3d_data
                         cm.to_batch_obj(obj, f"{wad_filename}_{sub_chunk_id}", x, chunk.height, z, chunk.rotation, vio)
                         vio += cm.n_vertices
@@ -228,19 +233,22 @@ class WAD(Dict[bytes, BaseWADSection]):
 
     def serialize(self, file_path_or_data_out: Union[Path, BufferedIOBase], conf: Configuration):
         data_out = file_path_or_data_out if isinstance(file_path_or_data_out, BufferedIOBase) else BytesIO()
+        wad_size_offset = data_out.tell()
         data_out.write(b'\x00\x00\x00\x00')
         for section in self.values():
             if section.serialize.__func__ is BaseWADSection.serialize:
                 section.fallback_serialize(data_out)
             else:
                 section.serialize(data_out, conf)
+        end_offset = data_out.tell()
+        wad_size = end_offset - wad_size_offset
+        if conf.game in (G.CROC_2_PS1, G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1):
+            wad_size += 2048
+        data_out.seek(wad_size_offset)
+        data_out.write(wad_size.to_bytes(4, 'little'))
+        data_out.seek(end_offset)
 
         if isinstance(file_path_or_data_out, Path):
             with open(file_path_or_data_out, 'wb') as output_file:
                 data_out.seek(0)
-                data = data_out.read()[4:]
-                size = len(data) + 4
-                if conf.game in (G.CROC_2_PS1, G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1):
-                    size += 2048
-                output_file.write(size.to_bytes(4, 'little'))
-                output_file.write(data)
+                output_file.write(data_out.read())

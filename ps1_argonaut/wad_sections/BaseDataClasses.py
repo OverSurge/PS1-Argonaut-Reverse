@@ -51,6 +51,14 @@ class BaseWADSection(BaseDataClass):
         data_out.write(b'\x00\x00\x00\x00')  # Section's size
         return data_out.tell()
 
+    @staticmethod
+    def serialize_section_size(data_out: BufferedIOBase, start: int):
+        end = data_out.tell()
+        size = end - start
+        data_out.seek(start - 4)
+        data_out.write(size.to_bytes(4, 'little'))
+        data_out.seek(end)
+
     @classmethod
     def fallback_parse_data(cls, data_in: BufferedIOBase):
         start = data_in.tell()

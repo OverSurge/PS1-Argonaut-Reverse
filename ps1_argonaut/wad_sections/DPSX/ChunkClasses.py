@@ -1,6 +1,6 @@
 from enum import IntEnum
 from io import StringIO
-from typing import List
+from typing import List, Iterable
 
 from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 from ps1_argonaut.wad_sections.DPSX.Model3DData import LevelGeom3DData
@@ -20,32 +20,53 @@ class SubChunk(BaseDataClass):
         self.rotation = rotation
 
 
-class ChunkHolder(BaseDataClass):
+class ChunkHolder(BaseDataClass, List[SubChunk]):
     def __init__(self, sub_chunks: List[SubChunk] = None, zone_id: int = None, fvw_data: bytes = None):
-        self.sub_chunks = sub_chunks if sub_chunks is not None else []
+        super().__init__(sub_chunks if sub_chunks is not None else [])
         self.zone_id = zone_id
         self.fvw_data = fvw_data
 
 
-class ChunksMatrix:
-    def __init__(self, n_rows: int, n_columns: int, chunks_models: List[LevelGeom3DData],
-                 chunks_holders: List[ChunkHolder], has_zone_ids: bool):
+class ChunksMatrix(List[ChunkHolder]):
+    def __init__(self, chunks_holders: Iterable[ChunkHolder], chunks_models: Iterable[LevelGeom3DData], n_rows: int,
+                 n_columns: int, has_zone_ids: bool):
+        super().__init__(chunks_holders)
         self.n_rows = n_rows
         self.n_columns = n_columns
-        self.chunks_models = chunks_models
-        self.chunks_holders = chunks_holders
+        self.chunks_models = list(chunks_models)
         self.max_zone_id = max(chunk_holder.zone_id for chunk_holder in chunks_holders) if has_zone_ids else None
 
     @property
     def n_filled_chunks(self):
-        return sum(len(x.sub_chunks) != 0 for x in self.chunks_holders)
+        return sum(len(chunk) != 0 for chunk in self)
 
     def __str__(self):
         return self.chunks_visual_map()
 
     def chunks_visual_map(self):
-        return '\n'.join([' '.join(['█' if self.chunks_holders[x * self.n_columns + y].sub_chunks else '░'
+        return '\n'.join([' '.join(['█' if self[x * self.n_columns + y] else '░'
                                     for y in range(self.n_columns)]) for x in range(self.n_rows)])
+
+    def chunks_visual_ids(self):
+        return '\n'.join([' '.join(
+            [str(x * self.n_columns + y).ljust(4) if self[x * self.n_columns + y] else '░░░░'
+             for y in range(self.n_columns)]) for x in range(self.n_rows)])
+
+    def subchunks_visual_ids(self):
+        subchunk_id = 0
+        res = StringIO()
+        for x in range(self.n_rows):
+            for y in range(self.n_columns):
+                if y != 0:
+                    res.write(' ')
+                subchunks = self[x * self.n_columns + y]
+                if subchunks:
+                    res.write(str(subchunk_id).ljust(4))
+                    subchunk_id += 1
+                else:
+                    res.write('░░░░')
+            res.write('\n')
+        return res.getvalue()
 
     def chunks_visual_zone_ids(self):
         if self.max_zone_id is None:
@@ -55,7 +76,7 @@ class ChunksMatrix:
             for y in range(self.n_columns):
                 if y != 0:
                     res.write(' ')
-                zone_id = self.chunks_holders[x * self.n_columns + y].zone_id
+                zone_id = self[x * self.n_columns + y].zone_id
                 if zone_id is not None and zone_id != self.max_zone_id:
                     res.write(str(zone_id).ljust(3))
                 else:

@@ -14,6 +14,7 @@ class SoundEffectsAmbientFlags(IntFlag):
 
 class DialoguesBGMsSoundFlags(IntFlag):
     IS_STEREO = 0x1
+    IS_MONO = 0x2
     IS_BACKGROUND_MUSIC = 0x4
 
 
@@ -61,7 +62,8 @@ class _AmbientOrEffectSound(Sound):
         return cls(sampling_rate, volume_level, flags, uk1, uk2, size)
 
     def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
-        data_out.write(self.struct.pack(self.sampling_rate, (self.sampling_rate * 4096) // 44100, self.volume_level,
+        rounded_sampling_rate = int(round((self.sampling_rate * 4096) / 44100))
+        data_out.write(self.struct.pack(self.sampling_rate, rounded_sampling_rate, self.volume_level,
                                         self.flags.value, self.uk1, self.uk2, self.size))
 
     def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
@@ -71,8 +73,9 @@ class _AmbientOrEffectSound(Sound):
 
 class AmbientSound(_AmbientOrEffectSound):
     def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
-        data_out.write(self.struct.pack(self.sampling_rate, (self.sampling_rate * 4096) // 48000, self.volume_level,
-                                        self.flags.value, self.uk1, self.uk2, self.size))
+        rounded_sampling_rate = int(round((self.sampling_rate * 4096) / 48000))
+        data_out.write(self.struct.pack(self.sampling_rate, rounded_sampling_rate, self.volume_level, self.flags.value,
+                                        self.uk1, self.uk2, self.size))
 
 
 class EffectSound(_AmbientOrEffectSound):
@@ -96,15 +99,16 @@ class DialogueBGMSound(Sound):
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         data_in.seek(4, SEEK_CUR)  # END section offset
-        sampling_rate = (int.from_bytes(data_in.read(2), 'little') * 44100) // 4096
+        sampling_rate = int(round(((int.from_bytes(data_in.read(2), 'little') * 44100) / 4096)))
         flags = DialoguesBGMsSoundFlags(int.from_bytes(data_in.read(2), 'little'))
         uk1 = data_in.read(4)
         size = int.from_bytes(data_in.read(4), 'little')
         return cls(sampling_rate, flags, uk1, size)
 
     def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
-        data_out.write(self.struct.pack(kwargs['end_section_offset'], (self.sampling_rate * 4096) // 44100,
-                                        self.flags.value, self.uk1, self.size))
+        rounded_sampling_rate = int(round((self.sampling_rate * 4096) / 44100))
+        data_out.write(self.struct.pack(kwargs['end_section_offset'], rounded_sampling_rate, self.flags.value, self.uk1,
+                                        self.size))
 
     def parse_vag(self, data_in: BufferedIOBase, conf: Configuration):
         self.vag = VAGSoundData.parse(data_in, conf, size=self._size, sampling_rate=self.sampling_rate,

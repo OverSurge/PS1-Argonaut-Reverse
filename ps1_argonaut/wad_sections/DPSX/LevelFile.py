@@ -165,4 +165,4 @@ class LevelFile(BaseDataClass):
                     ChunkHolder(zone_id=zone_ids[i], fvw_data=fvw_data[i] if fvw_data else None)
                     if conf.game != G.CROC_2_DEMO_PS1_DUMMY else ChunkHolder())
 
-        return cls(ChunksMatrix(n_chunk_rows, n_chunk_columns, chunk_models, chunks_holders, zone_ids is not None))
+        return cls(ChunksMatrix(chunks_holders, chunk_models, n_chunk_rows, n_chunk_columns, zone_ids is not None))

@@ -26,6 +26,7 @@ class ENDSection(BaseWADSection):
         if size != 0:
             if SPSXFlags.HAS_LEVEL_SFX in spsx_section.spsx_flags:
                 spsx_section.level_sfx_groups.parse_vags(data_in, conf)
+                spsx_section.level_sfx_mapping.parse_mapping(spsx_section.level_sfx_groups)
 
             data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
             spsx_section.dialogues_bgms.parse_vags(data_in, conf)
@@ -41,12 +42,11 @@ class ENDSection(BaseWADSection):
         if SPSXFlags.HAS_LEVEL_SFX in self.spsx_section.spsx_flags:
             self.spsx_section.level_sfx_groups.serialize_vags(data_out, conf)
 
-        pad_out_2048_bytes(data_out)
-        self.spsx_section.dialogues_bgms.serialize_vags(data_out, conf)
+        if SPSXFlags.HAS_COMMON_SFX_AND_DIALOGUES_BGMS in self.spsx_section.spsx_flags:
+            pad_out_2048_bytes(data_out)
+            self.spsx_section.dialogues_bgms.serialize_vags(data_out, conf)
 
         if conf.game == G.HARRY_POTTER_2_PS1:
             pad_out_2048_bytes(data_out)
 
-        size = data_out.tell() - start
-        data_out.seek(start - 4)
-        data_out.write(size.to_bytes(4, 'little'))
+        self.serialize_section_size(data_out, start)
