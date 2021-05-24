@@ -19,7 +19,7 @@ As far as I know, there are two big versions of the animations format:
   Rotations are stored in a 3×3 rotation matrix.  
   Subframes are 0x18 (24) bytes long.
 
-In Croc 2 PS1, only the old format is used. In Harry Potter 1 PS1, a majority of the animations use the new format, but some use the old one.
+In Croc 2 PS1, only the old format is used. In Harry Potter PS1, a majority of the animations use the new format, but some use the old one.
 
 ## File structure
 

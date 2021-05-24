@@ -22,7 +22,7 @@ In order to preview it, you must apply an animation frame to it (from an [animat
 
 ### 3D model structure
 
-> Extended data size, abbreviated to '**eds**', is 0x2C long in all versions of Croc 2, and 0x20 long in Harry Potter 1 PS1.
+> Extended data size, abbreviated to '**eds**', is 0x2C long in all versions of Croc 2, and 0x20 long in Harry Potter PS1.
 
 | Offset (h)   | Size (h)                                                     | Use                                 |
 | ------------ | ------------------------------------------------------------ | ----------------------------------- |

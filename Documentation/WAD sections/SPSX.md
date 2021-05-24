@@ -122,7 +122,7 @@ On your hex editor, the bits are in this order:
 
 ### Level sound effects headers structure
 
-> Level sound effects are separated into groups. Based on my observations, these groups seem to represent zones in the level, generally different rooms.  
+> Level sound effects are separated into groups. Based on my observations, these groups seem to represent one object that can emit sound (like an enemy).  
 > The headers are located in SPSX and the audio data in END. A 2048-bytes alignment is present before each group's audio data.
 
 > '**lec**' = sum of all groups' sound effects count, see [Level sound effects groups descriptors](#Level-sound-effects-groups-descriptors)
@@ -135,7 +135,7 @@ On your hex editor, the bits are in this order:
 | 0xC        | 0x4              | Unique level sound effects count                             | Abbreviated to '**ulsec**' |
 | 0x10       | 0x10 × **legc**  | [Level sound effects groups descriptors](#Level-sound-effects-groups-descriptors) |                            |
 | +0x0       | 0x14 × **lec**   | [Level sound effects descriptors](#Level-sound-effects-descriptors) |                            |
-| ++0x0      | 0x10 × **ulsec** | [Unique level sound effects structure](#Unique-level-sound-effects-structure) |                            |
+| ++0x0      | 0x10 × **ulsec** | [Level sound effects channels](#Level-sound-effects-channels-structure) |                            |
 
 #### Level sound effects groups descriptors
 
@@ -176,9 +176,13 @@ On your hex editor, the bits are in this order:
 | 2    | Background music   | If set, the track is intended for background music use       |
 | 3-15 | ∅ Empty            |                                                              |
 
-#### Unique level sound effects structure
+#### Level sound effects channels structure
 
-This structure seems to list duplicated level sound effects. Each row represents an unique level sound effect. Each column represents a level sound effect group.
+This structure seems to list duplicated level sound effects amongst groups.
+
+Each row represents an unique level sound effect. Each column seems to represent an audio channel which is bound to a level sound effect group.
+
+Not every column needs to be filled, but groups seem to always be in order.
 
 Values are either FF when empty or a level sound effect index (inside its group, not a global index).
 
@@ -186,13 +190,15 @@ There are always 16 columns, the first one being empty. We can then assume that 
 
 ##### Example:
 
-| Empty | 0th group | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | 14th group |
-| :---- | --------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---------- |
-| FF    | FF        | FF   | 00   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF         |
-| FF    | 00        | 01   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF         |
-| FF    | FF        | 00   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF         |
+| Empty | 0th channel | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | 14th channel |
+| :---- | ----------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ------------ |
+| FF    | FF          | FF   | FF   | 00   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF           |
+| FF    | 00          | FF   | 01   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF           |
+| FF    | FF          | FF   | 00   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF   | FF           |
 
 This level has 4 level sound effects, 3 groups and 3 unique level sound effects.
+
+The 0th column is empty, the 1st contains the 1st group, the 2nd is empty, the 3rd contains the 2nd group, the 4th contains the 3rd group, and the others are empty.
 
 The 0th level sound effect of the 2nd group is unique to this level.
 
