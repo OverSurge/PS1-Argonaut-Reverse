@@ -20,7 +20,7 @@ class TextureFile(List[TextureData], BaseDataClass):
     image_bytes_size = image_dimensions[0] * image_dimensions[1] // 2
 
     def __init__(self, n_rows: int, textures_data: bytes, legacy_alpha: bool, textures: Iterable[TextureData] = None):
-        super().__init__(textures)
+        super().__init__(textures) if textures is not None else []
         self.n_rows = n_rows
         self.textures_data = textures_data
         self.legacy_alpha = legacy_alpha  # TODO Legacy alpha (Croc 2)
@@ -74,6 +74,7 @@ class TextureFile(List[TextureData], BaseDataClass):
                     raise ZeroRunLengthError(data_in.tell())
             raw_textures.seek(0)
             textures_data = raw_textures.read()
+            raw_textures.close()
             if conf.game == G.CROC_2_DEMO_PS1:  # Patch for Croc 2 Demo (non-dummy) last end offset error
                 data_in.seek(-2, SEEK_CUR)
         else:

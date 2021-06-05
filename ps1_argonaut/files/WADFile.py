@@ -1,11 +1,12 @@
 import math
 from io import BytesIO, SEEK_CUR, StringIO, BufferedIOBase
 from pathlib import Path
-from typing import Dict, Union, Optional
+from typing import Dict, Union, Optional, List
 
 from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, wavefront_header, G
 from ps1_argonaut.errors_warnings import SectionNameError
+from ps1_argonaut.files.DATFile import DATFile
 from ps1_argonaut.wad_sections.DPSX.ChunkClasses import ChunkHolder
 from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
 from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
@@ -16,14 +17,33 @@ from ps1_argonaut.wad_sections.SPSX.Sounds import DialoguesBGMsSoundFlags
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
-class WADFile(Dict[bytes, BaseWADSection]):
+class WADFile(Dict[bytes, BaseWADSection], DATFile):
+    suffix = 'WAD'
+
     sections_conf: Dict[bytes, BaseWADSection] = {
         TPSXSection.codename_bytes: TPSXSection, SPSXSection.codename_bytes: SPSXSection,
         DPSXSection.codename_bytes: DPSXSection, PORTSection.codename_bytes: PORTSection,
         ENDSection.codename_bytes: ENDSection}
 
-    def __init__(self, sections: Dict[bytes, BaseWADSection]):
-        super().__init__(sections)
+    def __init__(self, stem: str, sections: Dict[bytes, BaseWADSection] = None, data: bytes = None):
+        dict.__init__(self, sections if sections is not None else {})
+        DATFile.__init__(self, stem, data=data)
+
+    def __str__(self):
+        titles = ' ({})'.format(', '.join(title.strip(' ') for title in self.titles)) if self.titles else ''
+        res = f"Game level{titles}"
+        if self:
+            res += '\n'
+            if self.tpsx:
+                res += f" {self.n_textures:>4} texture(s)"
+            if isinstance(self.spsx, SPSXSection):
+                res += f" {self.n_sounds:>4} audio file(s)"
+            if self.dpsx:
+                res += f" {self.n_models:>4} model(s) {self.n_animations:>4} animation(s)" \
+                       f" {self.n_filled_chunks:>4} chunk(s)"
+        return res
+
+    # WAD sections
 
     @property
     def tpsx(self) -> Optional[TPSXSection]:
@@ -45,13 +65,21 @@ class WADFile(Dict[bytes, BaseWADSection]):
     def end(self) -> Optional[ENDSection]:
         return self[ENDSection.codename_bytes] if ENDSection.codename_bytes in self else None
 
+    # TPSX
+
     @property
-    def titles(self):
+    def titles(self) -> List[str]:
         return () if self.tpsx is None else self.tpsx.titles
 
     @property
     def textures(self):
         return None if (self.tpsx is None) else self.tpsx.texture_file.textures
+
+    @property
+    def n_textures(self):
+        return 0 if self.tpsx is None else len(self.tpsx.texture_file.textures)
+
+    # SPSX
 
     @property
     def common_sound_effects(self):
@@ -60,18 +88,6 @@ class WADFile(Dict[bytes, BaseWADSection]):
     @property
     def ambient_tracks(self):
         return None if (self.spsx is None) else self.spsx.ambient_tracks
-
-    @property
-    def models(self):
-        return None if (self.dpsx is None) else self.dpsx.models_3d_file.models
-
-    @property
-    def animations(self):
-        return None if (self.dpsx is None) else self.dpsx.animations_file.animations
-
-    @property
-    def chunks_matrix(self):
-        return None if (self.dpsx is None) else self.dpsx.level_file.chunks_matrix
 
     @property
     def flattened_level_sfx(self):
@@ -85,6 +101,44 @@ class WADFile(Dict[bytes, BaseWADSection]):
     def dialogues_bgms(self):
         return None if (self.end is None) else self.spsx.dialogues_bgms
 
+    @property
+    def n_sounds(self):
+        return 0 if (self.spsx is None or not isinstance(self.spsx, SPSXSection)) else self.spsx.n_sounds
+
+    # DPSX
+
+    @property
+    def models_3d(self):
+        return None if self.dpsx is None else self.dpsx.models_3d
+
+    @property
+    def n_models(self):
+        return 0 if self.dpsx is None else len(self.dpsx.models_3d)
+
+    @property
+    def animations(self):
+        return None if self.dpsx is None else self.dpsx.animations
+
+    @property
+    def n_animations(self):
+        return 0 if self.dpsx is None else len(self.dpsx.animations)
+
+    @property
+    def scripts(self):
+        return None if self.dpsx is None else self.dpsx.scripts
+
+    @property
+    def n_scripts(self):
+        return 0 if self.dpsx is None else len(self.dpsx.scripts)
+
+    @property
+    def chunks_matrix(self):
+        return None if (self.dpsx is None) else self.dpsx.level_file.chunks_matrix
+
+    @property
+    def n_filled_chunks(self):
+        return 0 if self.dpsx is None else self.dpsx.level_file.chunks_matrix.n_filled_chunks
+
     def _prepare_obj_export(self, folder_path: Path, wad_filename: str):
         """Exports the material (MTL) and texture (PNG) files that are needed by the OBJ Wavefront file."""
         with (folder_path / (wad_filename + '.MTL')).open('w', encoding='ASCII') as mtl_file:
@@ -94,8 +148,8 @@ class WADFile(Dict[bytes, BaseWADSection]):
     def export_experimental_models(self, folder_path: Path, wad_filename: str):
         """Tries to find one compatible animation for each model in the WAD, animates it to make it clean
         (see doc about 3D models) and exports them into Wavefront OBJ files at the given location."""
-        n_models = self.dpsx.models_3d_file.n_models
-        n_animations = self.dpsx.animations_file.n_animations
+        n_models = self.n_models
+        n_animations = self.n_animations
 
         def guess_compatible_animation(position: int, n_vertices_groups: int):
             """EXPERIMENTAL: Band-aid, will be removed when animations' model id is found & reversed."""
@@ -107,7 +161,7 @@ class WADFile(Dict[bytes, BaseWADSection]):
                     if self.animations[a].n_vertices_groups == n_vertices_groups:
                         return a
                     a -= 1
-                if b < self.dpsx.animations_file.n_animations:
+                if b < n_animations:
                     if self.animations[b].n_vertices_groups == n_vertices_groups:
                         return b
                     b += 1
@@ -119,13 +173,13 @@ class WADFile(Dict[bytes, BaseWADSection]):
             raise FileExistsError
 
         self._prepare_obj_export(folder_path, wad_filename)
-        for i, model_3d in enumerate(self.dpsx.models_3d_file.models):
+        for i, model_3d in enumerate(self.dpsx.models_3d):
             obj_filename = f"{wad_filename}_{i}"
             with (folder_path / (obj_filename + '.OBJ')).open('w', encoding='ASCII') as obj_file:
                 if model_3d.n_vertices_groups == 1:
                     model_3d.to_single_obj(obj_file, obj_filename, self.textures, wad_filename)
                 else:
-                    animation_id = guess_compatible_animation(i, self.models[i].n_vertices_groups)
+                    animation_id = guess_compatible_animation(i, self.models_3d[i].n_vertices_groups)
                     if animation_id is None:
                         model_3d.to_single_obj(obj_file, obj_filename, self.textures, wad_filename)
                     else:
@@ -139,7 +193,7 @@ class WADFile(Dict[bytes, BaseWADSection]):
         self._prepare_obj_export(folder_path, filename)
         with (folder_path / (filename + '.OBJ')).open('w', encoding='ASCII') as obj_file:
             obj = StringIO()
-            self.models[model_id].to_single_obj(obj, filename, self.textures, filename)
+            self.models_3d[model_id].to_single_obj(obj, filename, self.textures, filename)
             obj_file.write(obj.getvalue())
 
     def export_audio(self, folder_path: Path, wad_filename: str):
@@ -186,8 +240,7 @@ class WADFile(Dict[bytes, BaseWADSection]):
                         sub_chunk_id += 1
             obj_file.write(obj.getvalue())
 
-    @classmethod
-    def parse(cls, file_path_or_data: Union[Path, bytes], conf: Configuration, *args, **kwargs):
+    def parse(self, conf: Configuration, *args, **kwargs):
         def parse_sections():
             data_in.seek(4)
             while True:
@@ -202,33 +255,28 @@ class WADFile(Dict[bytes, BaseWADSection]):
                 if codename == ENDSection.codename_bytes:  # ' DNE' (END)
                     break
 
-        if isinstance(file_path_or_data, Path):
-            data_in = BytesIO(file_path_or_data.read_bytes())
-        elif isinstance(file_path_or_data, bytes):
-            data_in = BytesIO(file_path_or_data)
-        else:
-            raise TypeError("file_path_or_data should be of type Path or bytes")
+        data_in = BytesIO(self._data)
         sections_offsets: Dict[bytes, int] = {}
-        sections = {}
+        self.clear()
         parse_sections()
 
         for codename_bytes, offset in sections_offsets.items():
             data_in.seek(offset)
-            if codename_bytes in cls.sections_conf:
-                section = cls.sections_conf[codename_bytes]
+            if codename_bytes in WADFile.sections_conf:
+                section = WADFile.sections_conf[codename_bytes]
                 if conf.game in section.supported_games:
                     if codename_bytes != ENDSection.codename_bytes:
-                        sections[codename_bytes] = section.parse(data_in, conf)
+                        self[codename_bytes] = section.parse(data_in, conf)
                     else:
-                        sections[codename_bytes] = section.parse(data_in, conf,
-                                                                 spsx_section=sections[SPSXSection.codename_bytes])
+                        self[codename_bytes] = section.parse(data_in, conf,
+                                                             spsx_section=self[SPSXSection.codename_bytes])
                 else:
-                    sections[codename_bytes] = BaseWADSection.fallback_parse(data_in)
+                    self[codename_bytes] = BaseWADSection.fallback_parse(data_in)
             else:
-                sections[codename_bytes] = BaseWADSection.fallback_parse(data_in)
+                self[codename_bytes] = BaseWADSection.fallback_parse(data_in)
 
         data_in.close()
-        return cls(sections)
+        self.end_parse()
 
     def serialize(self, file_path_or_data_out: Union[Path, BufferedIOBase], conf: Configuration):
         data_out = file_path_or_data_out if isinstance(file_path_or_data_out, BufferedIOBase) else BytesIO()
@@ -251,3 +299,4 @@ class WADFile(Dict[bytes, BaseWADSection]):
             with open(file_path_or_data_out, 'wb') as output_file:
                 data_out.seek(0)
                 output_file.write(data_out.read())
+                data_out.close()

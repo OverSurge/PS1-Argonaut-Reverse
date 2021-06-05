@@ -4,7 +4,7 @@ from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration
 
 
-class StrategyData(BaseDataClass):
+class ScriptData(BaseDataClass):
     def __init__(self, data: bytes):
         self.data = data
 

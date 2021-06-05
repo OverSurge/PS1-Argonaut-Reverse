@@ -1,4 +1,5 @@
 from enum import Enum
+from itertools import accumulate
 from typing import Iterable, List, Optional
 
 import numpy as np
@@ -6,6 +7,7 @@ from PIL import Image
 
 from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.files.DATFile import DATFile
 from ps1_argonaut.utils import parse_palette, XY, parse_4bits_paletted, parse_high_color
 
 
@@ -55,13 +57,28 @@ class ImageType(Enum):
     WIZPAGE = (2080, (128, 32), 16)
 
 
-class IMGFile(List[Image.Image], BaseDataClass):
-    def __init__(self, images: Iterable[Image.Image] = None):
-        super().__init__(images) if images is not None else []
+class IMGFile(List[Image.Image], DATFile, BaseDataClass):
+    suffix = 'IMG'
 
-    @classmethod
-    def parse(cls, *images_data: bytes, conf: Configuration, **kwargs):
-        images = []
+    def __init__(self, stem: str, images: Iterable[Image.Image] = None, data: bytes = None):
+        list.__init__(self, images if images is not None else ())
+        DATFile.__init__(self, stem, data=data)
+
+    def __str__(self):
+        dimensions = ', '.join(f'({x.size[0]}x{x.size[1]} px)' for x in self)
+        res = 'Menu image'
+        if dimensions:
+            res += f'\n{dimensions}'
+        return res
+
+    def parse(self, conf: Configuration, *args, **kwargs):
+        if self.stem == 'REPORT':  # Patch for REPORT.IMG that contains multiple images
+            offsets = list(accumulate((608, 288, 288, 288, 608, 608, 608, 608, 608, 608, 608, 608)))
+            images_data = [self._data[offsets[i - 1]:offsets[i]] for i in range(1, len(offsets))]
+        else:
+            images_data = (self._data,)
+
+        self.clear()
         for image_data in images_data:
             if len(image_data) in [image_type.bytes_size for image_type in ImageType]:
                 # Fix for WIZPAGE.IMG that has the same bytes length than other WIZ files but not the same dimensions
@@ -73,11 +90,11 @@ class IMGFile(List[Image.Image], BaseDataClass):
                     palette = parse_palette(image_data, image_type.n_palette_colors, image_type.has_alpha)
                 else:
                     palette = None
-                images.append(cls.to_full_colorized(image_data, image_type.dimensions, palette,
-                                                    image_type.n_palette_colors, image_type.has_alpha))
+                self.append(IMGFile.to_full_colorized(image_data, image_type.dimensions, palette,
+                                                      image_type.n_palette_colors, image_type.has_alpha))
             else:
                 raise ValueError("Unknown image size")
-        return cls(images)
+        self.end_parse()
 
     @staticmethod
     def to_full_colorized(data: bytes, dimensions: XY, palette: Optional[List[int]], n_palette_colors: int,

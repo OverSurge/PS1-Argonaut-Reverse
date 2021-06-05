@@ -1,70 +1,22 @@
-from enum import Enum
-from io import BytesIO, BufferedIOBase, SEEK_CUR
-from itertools import accumulate
+from io import BytesIO, SEEK_CUR
 from pathlib import Path
-from typing import List, Union, Optional, Iterable, Tuple
+from typing import List, Iterable, Type
 
 from ps1_argonaut.configuration import Configuration, G
-from ps1_argonaut.files.IMGFile import IMGFile
-from ps1_argonaut.files.WADFile import WADFile
+from ps1_argonaut.files.DATFile import DATFile
+from ps1_argonaut.files.DATFileType import guess_dat_file_type
 from ps1_argonaut.utils import pad_out_2048_bytes, pad_in_2048_bytes
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
-def guess_dat_file_type(stem: str, suffix: str):
-    for dat_file_type in DATFileType:  # type: DATFileType
-        if suffix == dat_file_type.suffix and stem not in dat_file_type.excluded_stems:
-            return dat_file_type
-    return DATFileType.NON_PARSABLE
-
-
-class DATFileType(Enum):
-    IMG = (IMGFile, 'IMG', ('SECURITY', 'KEEP'))
-    WAD = (WADFile, 'WAD', ('FESOUND', 'FETHUND'))
-    NON_PARSABLE = ()
-
-    def __init__(self, file_class=None, suffix: str = None, excluded_stems: Tuple[str, ...] = None):
-        self.file_class = file_class
-        self.suffix = suffix
-        self.excluded_stems = excluded_stems
-
-
-class DATFile:
-    def __init__(self, name: str, data: bytes = None):
-        if len(name) > 12 or '.' not in name:
-            raise ValueError('The engine uses "8.3 filenames" (8-characters stem, dot then 3-characters extension), '
-                             'please use a compatible filename.')
-        self.stem, self.suffix = name.rsplit('.', 1)
-        self._data = data
-        self.file: Optional[Union[IMGFile, WADFile]] = None
-        self.type = guess_dat_file_type(self.stem, self.suffix)
-
-    @property
-    def name(self):
-        return f"{self.stem}.{self.suffix}"
-
-    def parse(self, conf: Configuration):
-        if self.type == DATFileType.NON_PARSABLE or self.file is not None or self._data is None:
-            return
-
-        if self.name == 'REPORT.IMG':  # Patch for REPORT.IMG that contains multiple images
-            offsets = list(accumulate((608, 288, 288, 288, 608, 608, 608, 608, 608, 608, 608, 608)))
-            images_data = [self._data[offsets[i - 1]:offsets[i]] for i in range(1, len(offsets))]
-            self.file = self.type.file_class.parse(*images_data, conf=conf)
-        else:
-            self.file = self.type.file_class.parse(self._data, conf=conf, stem=self.stem)
-        self._data = None
-
-    def serialize(self, data_out: Union[Path, BufferedIOBase], conf: Configuration):
-        if self.file is not None:
-            self.file.serialize(data_out, conf)
-        elif self._data is not None:
-            if isinstance(data_out, Path):
-                data_out.write_bytes(self._data)
-            elif isinstance(data_out, BufferedIOBase):
-                data_out.write(self._data)
-            else:
-                raise TypeError
+def parse_dat_file(name: str, data: bytes):
+    stem, suffix = name.rsplit('.', 1)
+    dat_class: Type[DATFile] = guess_dat_file_type(stem, suffix).file_class
+    if dat_class is None:
+        dat_file = DATFile(stem, suffix, data)
+    else:
+        dat_file = dat_class(stem, data=data)
+    return dat_file
 
 
 # noinspection PyPep8Naming
@@ -102,10 +54,10 @@ class DIR_DAT(List[DATFile]):
             if dir_path is not None:
                 with open(dir_path, 'rb') as dir_data:
                     n_files = int.from_bytes(dir_data.read(4), 'little')
-                    for _ in range(n_files):
+                    for i in range(n_files):
                         name, size, start = conf.game.dir_struct.unpack(dir_data.read(conf.game.dir_struct.size))
                         dat_data.seek(start)
-                        files.append(DATFile(name.strip('\0').decode('ASCII'), dat_data.read(size)))
+                        files.append(parse_dat_file(name.strip('\0').decode('ASCII'), dat_data.read(size)))
             else:  # Croc 2 Demo DUMMY
                 while True:
                     name = hex(dat_data.tell())[2:].rjust(7, '0')
@@ -118,7 +70,7 @@ class DIR_DAT(List[DATFile]):
                     dat_data.seek(-4, SEEK_CUR)
                     data = dat_data.read(size - 4)
                     pad_in_2048_bytes(dat_data)
-                    files.append(DATFile(name + suffix, size_bytes + data))
+                    files.append(parse_dat_file(name + suffix, size_bytes + data))
         return cls(files)
 
     @classmethod
@@ -129,7 +81,7 @@ class DIR_DAT(List[DATFile]):
                 all_files.extend(file for file in file.rglob('*') if file.is_file())
             elif file.is_file():
                 all_files.append(file)
-        return cls(DATFile(file.name, file.read_bytes()) for file in all_files)
+        return cls(parse_dat_file(file.name, file.read_bytes()) for file in all_files)
 
     def serialize(self, output_folder: Path, conf: Configuration):
         dir_output = BytesIO()
@@ -157,3 +109,6 @@ class DIR_DAT(List[DATFile]):
         with open(output_folder / conf.game.dat_filename, 'wb') as dat_file:
             dat_output.seek(0)
             dat_file.write(dat_output.read())
+
+        dir_output.close()
+        dat_output.close()
