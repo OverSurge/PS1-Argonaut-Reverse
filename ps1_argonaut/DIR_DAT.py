@@ -1,11 +1,32 @@
+from enum import Enum
 from io import BytesIO, BufferedIOBase, SEEK_CUR
+from itertools import accumulate
 from pathlib import Path
-from typing import List, Union, Optional, Iterable
+from typing import List, Union, Optional, Iterable, Tuple
 
 from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.files.IMGFile import IMGFile
+from ps1_argonaut.files.WADFile import WADFile
 from ps1_argonaut.utils import pad_out_2048_bytes, pad_in_2048_bytes
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
-from ps1_argonaut.wad_sections.WAD import WAD
+
+
+def guess_dat_file_type(stem: str, suffix: str):
+    for dat_file_type in DATFileType:  # type: DATFileType
+        if suffix == dat_file_type.suffix and stem not in dat_file_type.excluded_stems:
+            return dat_file_type
+    return DATFileType.NON_PARSABLE
+
+
+class DATFileType(Enum):
+    IMG = (IMGFile, 'IMG', ('SECURITY', 'KEEP'))
+    WAD = (WADFile, 'WAD', ('FESOUND', 'FETHUND'))
+    NON_PARSABLE = ()
+
+    def __init__(self, file_class=None, suffix: str = None, excluded_stems: Tuple[str, ...] = None):
+        self.file_class = file_class
+        self.suffix = suffix
+        self.excluded_stems = excluded_stems
 
 
 class DATFile:
@@ -14,26 +35,34 @@ class DATFile:
             raise ValueError('The engine uses "8.3 filenames" (8-characters stem, dot then 3-characters extension), '
                              'please use a compatible filename.')
         self.stem, self.suffix = name.rsplit('.', 1)
-        self.data = data
-        self.file: Optional[WAD] = None
+        self._data = data
+        self.file: Optional[Union[IMGFile, WADFile]] = None
+        self.type = guess_dat_file_type(self.stem, self.suffix)
 
     @property
     def name(self):
         return f"{self.stem}.{self.suffix}"
 
     def parse(self, conf: Configuration):
-        if self.suffix == 'WAD':
-            self.file = WAD.parse(self.data, conf)
-            self.data = None
+        if self.type == DATFileType.NON_PARSABLE or self.file is not None or self._data is None:
+            return
+
+        if self.name == 'REPORT.IMG':  # Patch for REPORT.IMG that contains multiple images
+            offsets = list(accumulate((608, 288, 288, 288, 608, 608, 608, 608, 608, 608, 608, 608)))
+            images_data = [self._data[offsets[i - 1]:offsets[i]] for i in range(1, len(offsets))]
+            self.file = self.type.file_class.parse(*images_data, conf=conf)
+        else:
+            self.file = self.type.file_class.parse(self._data, conf=conf, stem=self.stem)
+        self._data = None
 
     def serialize(self, data_out: Union[Path, BufferedIOBase], conf: Configuration):
         if self.file is not None:
             self.file.serialize(data_out, conf)
-        elif self.data is not None:
+        elif self._data is not None:
             if isinstance(data_out, Path):
-                data_out.write_bytes(self.data)
+                data_out.write_bytes(self._data)
             elif isinstance(data_out, BufferedIOBase):
-                data_out.write(self.data)
+                data_out.write(self._data)
             else:
                 raise TypeError
 
@@ -76,7 +105,7 @@ class DIR_DAT(List[DATFile]):
                     for _ in range(n_files):
                         name, size, start = conf.game.dir_struct.unpack(dir_data.read(conf.game.dir_struct.size))
                         dat_data.seek(start)
-                        files.append(DATFile(name.decode('ASCII'), dat_data.read(size)))
+                        files.append(DATFile(name.strip('\0').decode('ASCII'), dat_data.read(size)))
             else:  # Croc 2 Demo DUMMY
                 while True:
                     name = hex(dat_data.tell())[2:].rjust(7, '0')
@@ -84,18 +113,16 @@ class DIR_DAT(List[DATFile]):
                     size = int.from_bytes(size_bytes, 'little')
                     if size == 0:
                         break
-                    print("size", size)
                     # WADs start with the 'XSPT' codename
                     suffix = '.WAD' if dat_data.read(4) == TPSXSection.codename_bytes else '.DEM'
                     dat_data.seek(-4, SEEK_CUR)
                     data = dat_data.read(size - 4)
                     pad_in_2048_bytes(dat_data)
-                    print(dat_data.tell())
                     files.append(DATFile(name + suffix, size_bytes + data))
         return cls(files)
 
     @classmethod
-    def from_files(cls, files: Iterable[Path]):
+    def from_files(cls, *files: Path):
         all_files = []
         for file in files:
             if file.is_dir():

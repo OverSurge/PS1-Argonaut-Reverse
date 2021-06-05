@@ -3,9 +3,9 @@ from io import BytesIO, SEEK_CUR, StringIO, BufferedIOBase
 from pathlib import Path
 from typing import Dict, Union, Optional
 
+from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, wavefront_header, G
 from ps1_argonaut.errors_warnings import SectionNameError
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.DPSX.ChunkClasses import ChunkHolder
 from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
 from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
@@ -16,7 +16,7 @@ from ps1_argonaut.wad_sections.SPSX.Sounds import DialoguesBGMsSoundFlags
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
-class WAD(Dict[bytes, BaseWADSection]):
+class WADFile(Dict[bytes, BaseWADSection]):
     sections_conf: Dict[bytes, BaseWADSection] = {
         TPSXSection.codename_bytes: TPSXSection, SPSXSection.codename_bytes: SPSXSection,
         DPSXSection.codename_bytes: DPSXSection, PORTSection.codename_bytes: PORTSection,
@@ -89,7 +89,7 @@ class WAD(Dict[bytes, BaseWADSection]):
         """Exports the material (MTL) and texture (PNG) files that are needed by the OBJ Wavefront file."""
         with (folder_path / (wad_filename + '.MTL')).open('w', encoding='ASCII') as mtl_file:
             mtl_file.write(wavefront_header + f"newmtl mtl1\nmap_Kd {wad_filename}.PNG")
-        self.tpsx.texture_file.generate_colorized_texture().save(folder_path / (wad_filename + '.PNG'))
+        self.tpsx.texture_file.to_colorized_texture().save(folder_path / (wad_filename + '.PNG'))
 
     def export_experimental_models(self, folder_path: Path, wad_filename: str):
         """Tries to find one compatible animation for each model in the WAD, animates it to make it clean
@@ -174,9 +174,8 @@ class WAD(Dict[bytes, BaseWADSection]):
             obj.write(Model3DData.mtl_header.format(mtl_filename=wad_filename))
             vio = 0
             sub_chunk_id = 0
-            for texture in self.textures:
-                for j in range(4):
-                    obj.write(f"vt {texture.coords[j][0] / 1024} {(1024 - texture.coords[j][1]) / 1024}\n")
+            [[obj.write(f"vt {coord[0] / 1024} {(1024 - coord[1]) / 1024}\n")
+              for coord in texture.output_coords] for texture in self.textures]
             for i, chunk_holder in enumerate(self.dpsx.level_file.chunks_matrix):  # type: int, ChunkHolder
                 if chunk_holder:
                     x, z = self.dpsx.level_file.chunks_matrix.x_z_coords(i)
@@ -188,7 +187,7 @@ class WAD(Dict[bytes, BaseWADSection]):
             obj_file.write(obj.getvalue())
 
     @classmethod
-    def parse(cls, file_path_or_data: Union[Path, bytes], conf: Configuration):
+    def parse(cls, file_path_or_data: Union[Path, bytes], conf: Configuration, *args, **kwargs):
         def parse_sections():
             data_in.seek(4)
             while True:

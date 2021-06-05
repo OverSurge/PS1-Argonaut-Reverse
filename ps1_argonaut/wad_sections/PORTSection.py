@@ -1,8 +1,8 @@
 from io import BufferedIOBase, SEEK_CUR
 from typing import List
 
+from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, G
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 
 
 class PORTSection(BaseWADSection):

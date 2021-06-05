@@ -2,7 +2,7 @@ import logging
 from enum import Enum
 from struct import Struct
 
-_default_struct = Struct('12sII')
+_default_struct = Struct('<12sII')
 
 
 class G(Enum):
@@ -14,7 +14,7 @@ class G(Enum):
         self.dat_filename = dat_filename
         self.dir_struct = dir_struct
 
-    CROC_1_PS1 = ("Croc 1 PS1", 1997, 'CROCFILE.1', 'CROCFILE.DIR', Struct('12sII4x'))
+    CROC_1_PS1 = ("Croc 1 PS1", 1997, 'CROCFILE.1', 'CROCFILE.DIR', Struct('<12sII4x'))
     CROC_2_PS1 = ("Croc 2 PS1", 1999, 'CROCII.DAT', 'CROCII.DIR', _default_struct)
     CROC_2_DEMO_PS1 = ("Croc 2 Demo PS1", 1999, 'CROCII.DAT', 'CROCII.DIR', _default_struct)
     CROC_2_DEMO_PS1_DUMMY = ("Croc 2 Demo PS1 (Dummy)", 1999, 'DUMMY.DAT', None, None)
@@ -23,7 +23,7 @@ class G(Enum):
 
 
 class Configuration:
-    def __init__(self, game: G, ignore_warnings: bool, debug=False):
+    def __init__(self, game: G, ignore_warnings=False, debug=False):
         self.game = game
         self.ignore_warnings = ignore_warnings  # If False, warnings stop program execution
         logging.basicConfig(format='%(message)s', level=logging.DEBUG if debug else logging.WARNING)

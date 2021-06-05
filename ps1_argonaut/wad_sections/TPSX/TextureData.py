@@ -1,57 +1,83 @@
 import math
 from io import BufferedIOBase
+from struct import Struct
+from typing import Tuple, Iterable, List, Optional
 
-from ps1_argonaut.configuration import Configuration, G
+from ps1_argonaut.BaseDataClasses import BaseDataClass
+from ps1_argonaut.configuration import Configuration
+from ps1_argonaut.utils import XY
+from ps1_argonaut.wad_sections.TPSX.TextureFlags import TextureFlags
+
+Box = Tuple[int, int, int, int]
+Coords = List[XY]
 
 
-class TextureData:
-    def __init__(self, data_in: BufferedIOBase, conf: Configuration):
-        coords_1 = (data_in.read(1)[0], data_in.read(1)[0])
-        palette_info = int.from_bytes(data_in.read(2), 'little')
-        coords_2 = (data_in.read(1)[0], data_in.read(1)[0])
-        flags = int.from_bytes(data_in.read(2), 'little')  # Use a IntFlag class
-        coords_3 = (data_in.read(1)[0], data_in.read(1)[0])
-        coords_4 = (data_in.read(1)[0], data_in.read(1)[0])
-        coords = [coords_1, coords_2, coords_3, coords_4]
+class TextureData(BaseDataClass):
+    struct = Struct('2BH2BH4B')
 
-        # Coordinates Mapping
-        if coords[0][0] > coords[1][0]:
-            if coords[0][1] > coords[2][1]:
-                cm = (3, 2, 1, 0)
+    def __init__(self, flags: TextureFlags, raw_coords: Coords, cm: Box, palette_start: Optional[int]):
+        self.flags = flags
+        assert self.flags.value & 0xFE00 == 0
+        self.raw_coords = raw_coords
+        self.cm = cm
+        self.palette_start = palette_start
+
+    @classmethod
+    def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
+        c1x, c1y, palette_info, c2x, c2y, flags, c3x, c3y, c4x, c4y = cls.struct.unpack(data_in.read(12))
+        flags: TextureFlags = TextureFlags(flags)
+        # Raw coordinates are contained in a 1024x1024, 512x1024 or 256x1024 space
+        # (16-colors paletted, 256-colors paletted and non-paletted high color respectively)
+        raw_coords = [(c1x, c1y), (c2x, c2y), (c3x, c3y), (c4x, c4y)]
+
+        # Coordinates Mapping, needed to put the coordinates in the right order
+        # (top-left, top-right, bottom-left then bottom-right)
+        if raw_coords[0][0] > raw_coords[1][0]:
+            if raw_coords[0][1] > raw_coords[2][1]:
+                cm = 3, 2, 1, 0
             else:
-                cm = (1, 0, 3, 2)
+                cm = 1, 0, 3, 2
         else:
-            if coords[0][1] > coords[2][1]:
-                cm = (2, 3, 0, 1)
+            if raw_coords[0][1] > raw_coords[2][1]:
+                cm = 2, 3, 0, 1
             else:
-                cm = (0, 1, 2, 3)
+                cm = 0, 1, 2, 3
 
-        self.n_row = ((flags & 4) >> 1) + ((flags & 16) >> 4)
-        self.n_column = flags & 3
-        self.idk = flags & 0xFE00
+        palette_start = None
+        if TextureFlags.IS_NOT_PALETTED not in flags:
+            palette_start = ((palette_info & 0xFFC0) << 3) + ((palette_info & 0xF) << 5)
 
-        self.paletted: bool = (flags & 256) == 0
-        if self.paletted:
-            self.palette_256_colors = (flags & 128) != 0
-            self.palette_start = ((palette_info & 65472) << 3) + ((palette_info & 15) << 5)
+        # The top-left x coordinate of the 256-colors or high color textures needs to be corrected
+        # 1024x1024 space -> 512x1024 or 256x1024 space respectively
+        return cls(flags, raw_coords, cm, palette_start)
 
-        # Correction Ratio, needed for non-4bit/pixel textures to be correctly positioned
-        cr = 4 if not self.paletted else 2 if self.palette_256_colors else 1
-        # The top-left x coordinate of the 256-colors or true color textures needs to be corrected
-        x_correction = coords[cm[0]][0] * cr - coords[cm[0]][0]
-        for i in range(4):
-            coords[i] = \
-                (coords[i][0] + x_correction + self.n_column * 256, coords[i][1] + self.n_row * 256)
+    @staticmethod
+    def round_coords(coords: Iterable[XY]):
+        """Textures tend to be better delimited when rounded to the nearest multiple of 2"""
+        return [(2 * math.ceil(coord[0] / 2), 2 * math.ceil(coord[1] / 2)) for coord in coords]
 
-        if conf.game != G.CROC_2_DEMO_PS1_DUMMY:
-            for i in range(4):
-                coords[i] = (2 * math.ceil(coords[i][0] / 2), 2 * math.ceil(coords[i][1] / 2))
-        else:
-            pass  # FIXME Croc 2 Demo Dummy textures are sometimes 1 pixel too small
-        self.coords = tuple(coords)
+    @property
+    def input_coords(self):
+        """Unordered coordinates of this texture (256x1024, 512x1024 or 1024x1024 space)"""
+        return self.round_coords(
+            (self.raw_coords[i][0] + (256 // self.flags.correction_ratio) * self.flags.n_column,
+             self.raw_coords[i][1] + 256 * self.flags.n_row) for i in range(4))
 
-        self.box = (self.coords[cm[0]][0], self.coords[cm[0]][1], self.coords[cm[3]][0], self.coords[cm[3]][1])
-        self.width = self.box[2] - self.box[0]
-        self.height = self.box[3] - self.box[1]
-        assert self.width > 0
-        assert self.height > 0
+    @property
+    def output_coords(self):
+        """Unordered coordinates of this texture (1024x1024 space)"""
+        x_correction = self.raw_coords[self.cm[0]][0] * self.flags.correction_ratio - self.raw_coords[self.cm[0]][0]
+        return self.round_coords(
+            (self.raw_coords[i][0] + x_correction + 256 * self.flags.n_column,
+             self.raw_coords[i][1] + 256 * self.flags.n_row) for i in range(4))
+
+    @property
+    def input_box(self):
+        """Left, top, right, bottom coordinates of this texture (256x1024, 512x1024 or 1024x1024 space)"""
+        ic = self.input_coords
+        return ic[self.cm[0]][0], ic[self.cm[0]][1], ic[self.cm[3]][0], ic[self.cm[3]][1]
+
+    @property
+    def output_top_left_corner(self):
+        """x, y coordinates of this texture's top left corner (1024x1024 space)"""
+        return self.output_coords[self.cm[0]]

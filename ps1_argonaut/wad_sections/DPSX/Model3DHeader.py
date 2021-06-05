@@ -1,9 +1,9 @@
 import warnings
 from io import BufferedIOBase, SEEK_CUR
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration, G
 from ps1_argonaut.errors_warnings import Models3DWarning
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 
 
 class Model3DHeader(BaseDataClass):

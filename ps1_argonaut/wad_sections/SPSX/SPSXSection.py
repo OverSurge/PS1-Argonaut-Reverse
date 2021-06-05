@@ -3,9 +3,9 @@ from io import BufferedIOBase
 from struct import pack
 from typing import Optional
 
+from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, G
 from ps1_argonaut.utils import round_up_padding
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.SPSX.LevelSFXMapping import LevelSFXMapping
 from ps1_argonaut.wad_sections.SPSX.SPSXFlags import SPSXFlags
 from ps1_argonaut.wad_sections.SPSX.SoundContainers import CommonSFXContainer, AmbientContainer, LevelSFXContainer, \

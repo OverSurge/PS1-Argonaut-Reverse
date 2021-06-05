@@ -4,9 +4,9 @@ from io import BufferedIOBase, SEEK_CUR
 from struct import Struct
 from typing import Iterable, List
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration
 from ps1_argonaut.utils import round_up_padding
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 from ps1_argonaut.wad_sections.SPSX.Sounds import Sound, EffectSound
 
 

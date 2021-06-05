@@ -2,7 +2,7 @@ from enum import IntEnum
 from io import StringIO
 from typing import List, Iterable
 
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.wad_sections.DPSX.Model3DData import LevelGeom3DData
 
 
@@ -20,7 +20,7 @@ class SubChunk(BaseDataClass):
         self.rotation = rotation
 
 
-class ChunkHolder(BaseDataClass, List[SubChunk]):
+class ChunkHolder(List[SubChunk], BaseDataClass):
     def __init__(self, sub_chunks: List[SubChunk] = None, zone_id: int = None, fvw_data: bytes = None):
         super().__init__(sub_chunks if sub_chunks is not None else [])
         self.zone_id = zone_id
@@ -34,7 +34,8 @@ class ChunksMatrix(List[ChunkHolder]):
         self.n_rows = n_rows
         self.n_columns = n_columns
         self.chunks_models = list(chunks_models)
-        self.max_zone_id = max(chunk_holder.zone_id for chunk_holder in chunks_holders) if has_zone_ids else None
+        self.max_zone_id = max(
+            chunk_holder.zone_id for chunk_holder in chunks_holders) if chunks_holders and has_zone_ids else None
 
     @property
     def n_filled_chunks(self):
@@ -62,7 +63,7 @@ class ChunksMatrix(List[ChunkHolder]):
                 subchunks = self[x * self.n_columns + y]
                 if subchunks:
                     res.write(str(subchunk_id).ljust(4))
-                    subchunk_id += 1
+                    subchunk_id += len(subchunks)
                 else:
                     res.write('░░░░')
             res.write('\n')

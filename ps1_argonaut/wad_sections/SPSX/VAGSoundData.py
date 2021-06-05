@@ -1,8 +1,8 @@
 from ctypes import c_int32
 from io import BufferedIOBase
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration, wav_header
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 
 MONO = 1
 STEREO = 2

@@ -1,9 +1,9 @@
 import math
 from io import BufferedIOBase
 
+from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, G
 from ps1_argonaut.utils import pad_out_2048_bytes
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.SPSX.SPSXFlags import SPSXFlags
 from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
 

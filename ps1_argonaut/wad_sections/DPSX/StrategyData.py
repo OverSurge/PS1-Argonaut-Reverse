@@ -1,7 +1,7 @@
 from io import BufferedIOBase
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 
 
 class StrategyData(BaseDataClass):

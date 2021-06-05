@@ -1,10 +1,11 @@
+from collections import Counter
 from io import BufferedIOBase
 from typing import Dict, Iterable, List, Optional
 
 import numpy as np
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 from ps1_argonaut.wad_sections.SPSX.SoundContainers import LevelSFXContainer, LevelSFXGroupContainer
 from ps1_argonaut.wad_sections.SPSX.Sounds import EffectSound
 
@@ -34,11 +35,12 @@ class LevelSFXMapping(BaseDataClass):
         mapping = np.full((self.n_unique_level_sfx, 16), 255, np.uint8)
         for group_id, group in enumerate(level_sfx_groups):  # type: int, LevelSFXGroupContainer
             channel_id = self.channel_group_mapping[group_id]
+            count = Counter()
             for sound_id, sound in enumerate(group):  # type: int, EffectSound
                 sound_hash = hash(sound.vag.data)
-                if sound_hash in self.sounds_hashes:
-                    unique_sound_id = self.sounds_hashes.index(sound_hash)
-                    mapping[unique_sound_id][channel_id] = sound_id
+                unique_sound_id = [i for i, v in enumerate(self.sounds_hashes) if v == sound_hash][count[sound_hash]]
+                count[sound_hash] += 1
+                mapping[unique_sound_id][channel_id] = sound_id
         data_out.write(bytes(mapping.flatten()))
 
     def parse_mapping(self, level_sfx_groups: LevelSFXContainer):

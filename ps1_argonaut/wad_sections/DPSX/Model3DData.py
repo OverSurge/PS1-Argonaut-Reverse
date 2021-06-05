@@ -1,11 +1,11 @@
 from io import BufferedIOBase, SEEK_CUR, StringIO
-from typing import List, TextIO, Union
+from typing import List, TextIO, Union, Iterable
 
 import numpy as np
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration, G, wavefront_header
 from ps1_argonaut.errors_warnings import IncompatibleAnimationError, NegativeIndexError, VerticesNormalsGroupsMismatch
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 from ps1_argonaut.wad_sections.DPSX import ChunkClasses
 from ps1_argonaut.wad_sections.DPSX.AnimationData import AnimationData
 from ps1_argonaut.wad_sections.DPSX.Model3DHeader import Model3DHeader
@@ -144,8 +144,8 @@ class BaseModel3DData(BaseDataClass):
         return Model3DData(self.header, self.is_world_model_3d, vertices, normals, self.quads, self.tris,
                            self.faces_normals, self.faces_texture_ids, self.n_vertices_groups)
 
-    def _to_obj(self, obj: Union[StringIO, TextIO], filename: str, textures: List[TextureData] = None, x: int = None,
-                y: int = None, z: int = None, rotation=None, vertex_index_offset: int = None):
+    def _to_obj(self, obj: Union[StringIO, TextIO], filename: str, textures: Iterable[TextureData] = None,
+                x: int = None, y: int = None, z: int = None, rotation=None, vertex_index_offset: int = None):
         """Creates a Wavefront OBJ 3D model from 3D model information and a texture file."""
         if textures is None and x is not None and y is not None and z is not None and rotation is not None and \
                 vertex_index_offset is not None:
@@ -174,8 +174,8 @@ class BaseModel3DData(BaseDataClass):
         [[obj.write(f"vn {n[0]} {n[1]} {n[2]}\n") for n in ng] for ng in self.normals]
 
         if standalone_export:
-            [[obj.write(f"vt {texture.coords[j][0] / 1024} {(1024 - texture.coords[j][1]) / 1024}\n")
-              for j in range(4)] for texture in textures]
+            [[obj.write(f"vt {coord[0] / 1024} {(1024 - coord[1]) / 1024}\n")
+              for coord in texture.output_coords] for texture in textures]
 
         vio = vertex_index_offset
         [obj.write("f {v1}/{t1}/{v1} {v2}/{t2}/{v2} {v3}/{t3}/{v3} {v4}/{t4}/{v4}\n".format(
@@ -190,7 +190,7 @@ class BaseModel3DData(BaseDataClass):
             t1=4 * self.faces_texture_ids[n_q + i] + 2, t2=4 * self.faces_texture_ids[n_q + i] + 1,
             t3=4 * self.faces_texture_ids[n_q + i] + 3)) for i in range(len(self.tris))]
 
-    def to_single_obj(self, obj: Union[StringIO, TextIO], obj_filename: str, textures: List[TextureData],
+    def to_single_obj(self, obj: Union[StringIO, TextIO], obj_filename: str, textures: Iterable[TextureData],
                       mtl_filename: str = None):
         """Creates a standalone Wavefront OBJ 3D model."""
         obj.write(self.mtl_header.format(mtl_filename=mtl_filename if mtl_filename else obj_filename))

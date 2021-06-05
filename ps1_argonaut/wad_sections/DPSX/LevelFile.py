@@ -1,8 +1,8 @@
 from io import BufferedIOBase, SEEK_CUR
 from typing import List, Optional, Union
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration, G
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 from ps1_argonaut.wad_sections.DPSX.ChunkClasses import ChunkHolder, ChunkRotation, ChunksMatrix, SubChunk
 from ps1_argonaut.wad_sections.DPSX.Model3DData import LevelGeom3DData
 from ps1_argonaut.wad_sections.DPSX.Model3DHeader import Model3DHeader

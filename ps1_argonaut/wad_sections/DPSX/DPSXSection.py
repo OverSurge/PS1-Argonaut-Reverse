@@ -1,7 +1,7 @@
 from io import BufferedIOBase, SEEK_CUR
 
+from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, G, PARSABLE_GAMES
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseWADSection
 from ps1_argonaut.wad_sections.DPSX.AnimationsFile import AnimationsFile
 from ps1_argonaut.wad_sections.DPSX.LevelFile import LevelFile
 from ps1_argonaut.wad_sections.DPSX.Models3DFile import Models3DFile

@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from ps1_argonaut.DIR_DAT import DIR_DAT, DATFile
+from ps1_argonaut.DIR_DAT import DIR_DAT, DATFile, DATFileType
 from ps1_argonaut.configuration import Configuration, PARSABLE_GAMES, SLICEABLE_GAMES, SUPPORTED_GAMES
 from ps1_argonaut.errors_warnings import SectionNameError
 from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
@@ -19,20 +19,19 @@ def parse_args(_args):
 
     data_source = parser.add_mutually_exclusive_group(required=True)
     data_source.add_argument("-dirdat", type=str, help="Where the DIR/DAT files are located.", metavar="DIR_DAT_PATH")
-    data_source.add_argument("-wad", action='append', type=str,
-                             help="Path(s) to WAD file(s) / folder(s) containing WAD files", metavar="WAD_PATH")
+    data_source.add_argument("-files", action='append', type=str, metavar="FILES_PATH",
+                             help="Path(s) to WAD/IMG/etc file(s) / folder(s) containing some of them. "
+                                  "DON'T use this for DIR/DAT files, use -dirdat instead.")
 
-    parser.add_argument("-tex", "--export-textures", type=str, help="Extracts textures to the given folder.",
+    parser.add_argument("-tex", "--export-textures", type=str, help="Extracts WAD textures to the given folder.",
                         metavar="FOLDER_PATH")
-    parser.add_argument("-mod", "--export-models", type=str, help="Extracts 3D models to the given folder.",
+    parser.add_argument("-mod", "--export-models", type=str, help="Extracts WAD 3D models to the given folder.",
                         metavar="FOLDER_PATH")
-    parser.add_argument("-aud", "--export-audio", type=str, help="Extracts audio tracks to the given folder.",
+    parser.add_argument("-aud", "--export-audio", type=str, help="Extracts WAD audio tracks to the given folder.",
                         metavar="FOLDER_PATH")
-    parser.add_argument("-lvl", "--export-levels", type=str, help="Extracts levels as 3D models to the given folder.",
+    parser.add_argument("-lvl", "--export-levels", type=str, help="Extracts WAD levels as 3D models to the given folder.",
                         metavar="FOLDER_PATH")
-    parser.add_argument("-all", "--process-all-sections", action='store_true',
-                        help="DEBUG | By default, this script only reads textures information to greatly reduce the "
-                             "processing duration. This option forces the processing of 3D models & animations.")
+    parser.add_argument('-img', "--export-images", type=str, help="Extracts .IMG files to the given folder.")
     parser.add_argument("-v", "--verbose", action='store_true', help="Enables debug prints")
     parser.add_argument("--ignore-warnings", action='store_true',
                         help="Allows the program to continue its execution after triggering a warning.")
@@ -47,6 +46,14 @@ def create_export_directory(path: Path):
         path.mkdir(parents=True)
 
 
+def export_images_from_img(img: DATFile, output_dir: Path):
+    if len(img.file) == 1:
+        img.file[0].save(output_dir / f"{img.stem}.PNG")
+    else:
+        for i, image in enumerate(img.file):
+            image.save(output_dir / f"{img.stem}_{i}.PNG")
+
+
 def export_assets_from_wad(wad: DATFile, args, conf: Configuration):
     wad_file = wad.file
     titles = ', '.join([title.strip(' \0') for title in wad_file.titles])
@@ -55,7 +62,7 @@ def export_assets_from_wad(wad: DATFile, args, conf: Configuration):
     if conf.game in TPSXSection.supported_games:
         print(f" {wad_file.tpsx.texture_file.n_textures:>4} texture(s)", end=' ')
         if args.export_textures:
-            wad_file.tpsx.texture_file.generate_colorized_texture().save(Path(args.export_textures) / f"{wad.stem}.PNG")
+            wad_file.tpsx.texture_file.to_colorized_texture().save(Path(args.export_textures) / f"{wad.stem}.PNG")
 
     if conf.game in SPSXSection.supported_games:
         print(f" {wad_file.spsx.n_sounds:>3} audio file(s)", end=' ')
@@ -86,13 +93,14 @@ def export_assets(args):
             print(f"[{i + 1:>{n_digits}}/{n_files}] {dat_file.name:>12}", end='')
             try:
                 dat_file.parse(conf)
-                if dat_file.suffix == 'WAD':
+                if dat_file.type == DATFileType.IMG and args.export_images:
+                    export_images_from_img(dat_file, Path(args.export_images))
+                elif dat_file.type == DATFileType.WAD:
                     export_assets_from_wad(dat_file, args, conf)
             except SectionNameError:
                 print("\n  /!\\ Not a correct WAD file (generally FESOUND or FETHUND)")
             print('\n')
 
-    exports = (args.export_textures, args.export_models, args.export_audio, args.export_levels)
     game = next((game for game in SUPPORTED_GAMES if game.title == args.game), None)
     if game not in PARSABLE_GAMES:
         raise NotImplementedError("Files from this game can be extracted, but not reversed (yet). "
@@ -102,13 +110,11 @@ def export_assets(args):
 
     if args.dirdat:
         dir_dat = DIR_DAT.from_dir_dat(Path(args.dirdat), conf)
-    else:  # args.wad
-        dir_dat = DIR_DAT.from_files(Path(file) for file in args.wad)
+    else:  # args.files
+        dir_dat = DIR_DAT.from_files(*(Path(file) for file in args.files))
 
-    for export in exports:
-        if export:
-            create_export_directory(Path(export))
-
+    export_paths = (args.export_images, args.export_textures, args.export_models, args.export_audio, args.export_levels)
+    [create_export_directory(Path(export_path)) for export_path in export_paths if export_path]
     parse_files()
 
 

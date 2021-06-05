@@ -5,8 +5,8 @@ from typing import List
 import numpy as np
 from pyquaternion import Quaternion
 
+from ps1_argonaut.BaseDataClasses import BaseDataClass
 from ps1_argonaut.configuration import Configuration
-from ps1_argonaut.wad_sections.BaseDataClasses import BaseDataClass
 from ps1_argonaut.wad_sections.DPSX.AnimationHeader import AnimationHeader
 
 
