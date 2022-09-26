@@ -40,7 +40,7 @@ So far, I encountered 3 different types of color storage techniques, divided int
 
 #### 15-bit high color
 
-On your hex editor, the bits are in this order (R for Red, G for Green, B for Blue, T for the transparency bit):  
+On your hex editor, the bits are in this order (R for Red, G for Green, B for Blue, T for the transparency bit):
 
 ```
 | 07 06 05 04 03 02 01 00 | 15 14 13 12 11 10 09 08 |  
@@ -49,11 +49,11 @@ On your hex editor, the bits are in this order (R for Red, G for Green, B for Bl
 
 > LSB = Less Significant Bit, MSB = Most Significant Bit
 
-| Bit   | Usage                                | Notes                                                        |
-| :---- | :----------------------------------- | :----------------------------------------------------------- |
-| 0-4   | Red component                        | 4th bit is the MSB, 0th bit is the LSB                       |
-| 5-9   | Green component                      | 9th bit is the MSB, 5th bit is the LSB                       |
-| 10-14 | Blue component                       | 14th bit is the MSB, 10th bit is the LSB                     |
+| Bit   | Usage                                | Notes                                                                                                                       |
+|:------|:-------------------------------------|:----------------------------------------------------------------------------------------------------------------------------|
+| 0-4   | Red component                        | 4th bit is the MSB, 0th bit is the LSB                                                                                      |
+| 5-9   | Green component                      | 9th bit is the MSB, 5th bit is the LSB                                                                                      |
+| 10-14 | Blue component                       | 14th bit is the MSB, 10th bit is the LSB                                                                                    |
 | 15    | Transparency bit OR null<sup>1</sup> | If all bits, including this one, are not set, the color is transparent. If this bit is the only one set, the color is black |
 
 <sup>1</sup> : If the color is from a 256-color palette, this bit is unused.
@@ -84,34 +84,33 @@ Textures that use 16-color palettes take 4 bits per pixel.
 
 ## Textures header structure
 
-| Offset (h) | Size (h)              | Use                                                  | Notes                                                        |
-| :--------- | :-------------------- | :--------------------------------------------------- | :----------------------------------------------------------- |
-| 0x0        | 0x4                   | Textures count                                       | Abbreviated to '**tc**'                                      |
-| 0x4        | 0x4                   | Texture file rows count                              | Each row is 256-pixel large (4 rows / 1024 px max)           |
-| 0x8        | 0xC × '**tc**'        | [Texture descriptors](#Texture-descriptor-structure) | In Harry Potter, the 16 last texture descriptors are blank   |
-| +0x0       | 0x4                   | **UNKNOWN**                                          | Unknown count, can be 0. Abbreviated to '**uc**'             |
-| +0x4       | 0x4                   | **UNKNOWN**                                          |                                                              |
-| +0x8       | 0x4 × **uc**          | **UNKNOWN**                                          | Can be nonexistent if **uc** == 0                            |
+| Offset (h) | Size (h)              | Use                                                  | Notes                                                                                                  |
+|:-----------|:----------------------|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------|
+| 0x0        | 0x4                   | Textures count                                       | Abbreviated to '**tc**'                                                                                |
+| 0x4        | 0x4                   | Texture file rows count                              | Each row is 256-pixel large (4 rows / 1024 px max)                                                     |
+| 0x8        | 0xC × '** tc**'       | [Texture descriptors](#Texture-descriptor-structure) | In Harry Potter, the 16 last texture descriptors are blank                                             |
+| +0x0       | 0x4                   | **UNKNOWN**                                          | Unknown count, can be 0. Abbreviated to '**uc**'                                                       |
+| +0x4       | 0x4                   | Effects count                                        | TODO Named like that in the game's code                                                                |
+| +0x8       | 0x4 × **uc**          | **UNKNOWN**                                          | Can be nonexistent if **uc** == 0                                                                      |
 | ++0x0      | 0x0 or 0x3C00         | Legacy textures                                      | Nonexistent if the 3rd flags bit is not set, else 0x3C00 long. See [Legacy textures](#Legacy-textures) |
-| +++0x0     | Until the end of TPSX | Raw textures data                                    | Is compressed in most games, see [RLE compression](#RLE-compression) |
-
+| +++0x0     | Until the end of TPSX | Raw textures data                                    | Is compressed in most games, see [RLE compression](#RLE-compression)                                   |
 
 ## Texture descriptor structure
 
-| Offset (h) | Size (h) | Usage                                  | Notes                                                        |
-| :--------- | :------- | :------------------------------------- | :----------------------------------------------------------- |
-| 0x0        | 0x1      | x ┬ Image coordinates of the 1st point |                                                              |
-| 0x1        | 0x1      | y ┘                                    |                                                              |
+| Offset (h) | Size (h) | Usage                                  | Notes                                                                                                 |
+|:-----------|:---------|:---------------------------------------|:------------------------------------------------------------------------------------------------------|
+| 0x0        | 0x1      | x ┬ Image coordinates of the 1st point |                                                                                                       |
+| 0x1        | 0x1      | y ┘                                    |                                                                                                       |
 | 0x2        | 0x2      | Color palette information              | See [Color palette information bit by bit structure](#Color-palette-information-bit-by-bit-structure) |
-| 0x4        | 0x1      | x ┬ Image coordinates of the 2nd point |                                                              |
-| 0x5        | 0x1      | y ┘                                    |                                                              |
-| 0x6        | 0x2      | Texture flags                          | See [Texture flags bit by bit structure](#Texture-flags-bit-by-bit-structure) |
-| 0x8        | 0x1      | x ┬ Image coordinates of the 3rd point |                                                              |
-| 0x9        | 0x1      | y ┘                                    |                                                              |
-| 0xA        | 0x1      | x ┬ Image coordinates of the 4th point |                                                              |
-| 0xB        | 0x1      | y ┘                                    |                                                              |
+| 0x4        | 0x1      | x ┬ Image coordinates of the 2nd point |                                                                                                       |
+| 0x5        | 0x1      | y ┘                                    |                                                                                                       |
+| 0x6        | 0x2      | Texture flags                          | See [Texture flags bit by bit structure](#Texture-flags-bit-by-bit-structure)                         |
+| 0x8        | 0x1      | x ┬ Image coordinates of the 3rd point |                                                                                                       |
+| 0x9        | 0x1      | y ┘                                    |                                                                                                       |
+| 0xA        | 0x1      | x ┬ Image coordinates of the 4th point |                                                                                                       |
+| 0xB        | 0x1      | y ┘                                    |                                                                                                       |
 
-The points seems to follow the same pattern as 3D models faces' vertices, see [3D Models#Quadrilaterals vertices order](3D%20models.md#Quadrilaterals-vertices-order).
+The points seem to follow the same pattern as 3D models faces' vertices, see [3D Models#Quadrilaterals vertices order](3D%20models.md#Quadrilaterals-vertices-order).
 
 ### Color palette information bit by bit structure
 
@@ -122,12 +121,12 @@ On your hex editor, the bits are in this order:
 
 > LSB = Less Significant Bit, MSB = Most Significant Bit
 
-| Bit  | Usage                                   | Notes                                                        |
-| :--- | :-------------------------------------- | :----------------------------------------------------------- |
+| Bit  | Usage                                   | Notes                                                                                                                                                                                    |
+|:-----|:----------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 0-3  | Horizontal shift of the palette's start | 2th bit is the MSB, 0th bit is the LSB. +1 on this value means +32 bytes or +16 pixels towards the right (on a 256-pixel wide true color representation). I've never seen these bits set |
-| 4    | **UNKNOWN**                             | This bit is identical to the 15th bit, that is the MSB of the vertical shift (weight: 512) |
-| 5    | **UNKNOWN**                             | All textures seem to have this bit set (except unpaletted ones) |
-| 6-15 | Vertical shift of the palette's start   | 15th bit is the MSB, 6th bit is the LSB. +1 on this value means +512 bytes or +1 pixel downwards (on a 256-pixel wide true color representation) |
+| 4    | **UNKNOWN**                             | This bit is identical to the 15th bit, that is the MSB of the vertical shift (weight: 512)                                                                                               |
+| 5    | **UNKNOWN**                             | All textures seem to have this bit set (except unpaletted ones)                                                                                                                          |
+| 6-15 | Vertical shift of the palette's start   | 15th bit is the MSB, 6th bit is the LSB. +1 on this value means +512 bytes or +1 pixel downwards (on a 256-pixel wide true color representation)                                         |
 
 ### Texture flags bit by bit structure
 
@@ -138,25 +137,25 @@ On your hex editor, the bits are in this order:
 
 > LSB = Less Significant Bit, MSB = Most Significant Bit
 
-| Bit  | Usage                                                        | Notes                                                        |
-| :--- | :----------------------------------------------------------- | :----------------------------------------------------------- |
-| 0    | LSB of column number                                         | See [Row & columns bits](#Rows--columns-bits)                |
-| 1    | MSB of column number                                         |                                                              |
-| 2    | **MSB** of row number                                        |                                                              |
-| 3    | **UNKNOWN**                                                  | All textures seem to have this bit set (except unpaletted ones) |
-| 4    | **LSB** of row number                                        |                                                              |
-| 5    | **UNKNOWN**                                                  | Most textures have this bit set                              |
-| 6    | **UNKNOWN**                                                  | Seems to be set on textures that aren't displayed "all the time". For example, for animated textures, for a spell that needs to be learned beforehand, etc. |
-| 7    | If set, the texture uses a 256-color palette, else it uses a 16-color palette | See [Palettes](#Palettes)                                    |
-| 8    | If set, the texture uses no palette, all pixels are unpaletted 15-bit color pixels | See [15-bit high color](#15-bit-high-color)                  |
-| 9-15 | ∅ Empty                                                      | (As far as I know)                                           |
+| Bit  | Usage                                                                              | Notes                                                                                                                                                       |
+|:-----|:-----------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0    | LSB of column number                                                               | See [Row & columns bits](#Rows--columns-bits)                                                                                                               |
+| 1    | MSB of column number                                                               |                                                                                                                                                             |
+| 2    | **MSB** of row number                                                              |                                                                                                                                                             |
+| 3    | **UNKNOWN**                                                                        | All textures seem to have this bit set (except unpaletted ones)                                                                                             |
+| 4    | **LSB** of row number                                                              |                                                                                                                                                             |
+| 5    | **UNKNOWN**                                                                        | Most textures have this bit set                                                                                                                             |
+| 6    | **UNKNOWN**                                                                        | Seems to be set on textures that aren't displayed "all the time". For example, for animated textures, for a spell that needs to be learned beforehand, etc. |
+| 7    | If set, the texture uses a 256-color palette, else it uses a 16-color palette      | See [Palettes](#Palettes)                                                                                                                                   |
+| 8    | If set, the texture uses no palette, all pixels are unpaletted 15-bit color pixels | See [15-bit high color](#15-bit-high-color)                                                                                                                 |
+| 9-15 | ∅ Empty                                                                            | (As far as I know)                                                                                                                                          |
 
 #### Rows & columns bits
 
 This table represents the link between row & column bits and the associated texture's zone.
 
 |                                                     |                                                     |            |                                     |
-| :-------------------------------------------------: | :-------------------------------------------------: | :--------: | :---------------------------------: |
+|:---------------------------------------------------:|:---------------------------------------------------:|:----------:|:-----------------------------------:|
 |                                                     |                                                     | 1st<br>bit |  <pre>0      0      1      1</pre>  |
 |                                                     |                                                     | 0th<br>bit |  <pre>0      1      0      1</pre>  |
 |                       2nd bit                       |                       4th bit                       |            |                                     |

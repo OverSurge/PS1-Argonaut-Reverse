@@ -57,7 +57,7 @@ class TextureFile(List[TextureData], BaseDataClass):
         if conf.game in (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1):
             data_in.seek(192, SEEK_CUR)  # 16 textures x 12 bytes
         n_idk_yet_1 = int.from_bytes(data_in.read(4), 'little')
-        n_idk_yet_2 = int.from_bytes(data_in.read(4), 'little')
+        number_effects = int.from_bytes(data_in.read(4), 'little')  # Name found in the debug symbols
         data_in.seek(n_idk_yet_1 * cls.image_header_size, SEEK_CUR)
 
         if has_legacy_textures:  # Patch for legacy textures, see Textures documentation
