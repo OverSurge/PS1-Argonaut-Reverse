@@ -1,11 +1,11 @@
 from io import BytesIO, SEEK_CUR
 from pathlib import Path
-from typing import List, Iterable, Type
+from typing import Iterable, List, Type
 
 from ps1_argonaut.configuration import Configuration, G
 from ps1_argonaut.files.DATFile import DATFile
 from ps1_argonaut.files.DATFileType import guess_dat_file_type
-from ps1_argonaut.utils import pad_out_2048_bytes, pad_in_2048_bytes
+from ps1_argonaut.utils import pad_in_2048_bytes, pad_out_2048_bytes
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
@@ -57,7 +57,7 @@ class DIR_DAT(List[DATFile]):
                     for i in range(n_files):
                         name, size, start = conf.game.dir_struct.unpack(dir_data.read(conf.game.dir_struct.size))
                         dat_data.seek(start)
-                        files.append(parse_dat_file(name.strip('\0').decode('ASCII'), dat_data.read(size)))
+                        files.append(parse_dat_file(name.strip(b'\x00').decode('ASCII'), dat_data.read(size)))
             else:  # Croc 2 Demo DUMMY
                 while True:
                     name = hex(dat_data.tell())[2:].rjust(7, '0')
