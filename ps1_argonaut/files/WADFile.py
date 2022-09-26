@@ -1,10 +1,10 @@
 import math
-from io import BytesIO, SEEK_CUR, StringIO, BufferedIOBase
+from io import BufferedIOBase, BytesIO, SEEK_CUR, StringIO
 from pathlib import Path
-from typing import Dict, Union, Optional, List
+from typing import Dict, List, Optional, Union
 
 from ps1_argonaut.BaseDataClasses import BaseWADSection
-from ps1_argonaut.configuration import Configuration, wavefront_header, G
+from ps1_argonaut.configuration import Configuration, G, wavefront_header
 from ps1_argonaut.errors_warnings import SectionNameError
 from ps1_argonaut.files.DATFile import DATFile
 from ps1_argonaut.wad_sections.DPSX.ChunkClasses import ChunkHolder
@@ -12,8 +12,9 @@ from ps1_argonaut.wad_sections.DPSX.DPSXSection import DPSXSection
 from ps1_argonaut.wad_sections.DPSX.Model3DData import Model3DData
 from ps1_argonaut.wad_sections.ENDSection import ENDSection
 from ps1_argonaut.wad_sections.PORTSection import PORTSection
-from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
+from ps1_argonaut.wad_sections.SPSX import VAGSoundData
 from ps1_argonaut.wad_sections.SPSX.Sounds import DialoguesBGMsSoundFlags
+from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
 from ps1_argonaut.wad_sections.TPSX.TPSXSection import TPSXSection
 
 
@@ -196,14 +197,18 @@ class WADFile(Dict[bytes, BaseWADSection], DATFile):
             self.models_3d[model_id].to_single_obj(obj, filename, self.textures, filename)
             obj_file.write(obj.getvalue())
 
-    def export_audio(self, folder_path: Path, wad_filename: str):
+    def export_audio(self, folder_path: Path, wad_filename: str, fmt: str):
+        if fmt not in ('VAG', 'WAV'):
+            raise ValueError("Only VAG and WAV export is supported at the moment")
+
         if self.spsx:
             mono_sounds = {'effect': self.spsx.common_sfx, 'ambient': self.spsx.ambient_tracks,
                            'level_effect': self.spsx.level_sfx_groups}
             for prefix, sounds in mono_sounds.items():
                 for i, vag in enumerate(sounds.vags):
                     filename = f"{wad_filename}_{prefix}_{i}"
-                    (folder_path / f"{filename}.WAV").write_bytes(vag.to_wav(filename))
+                    audio_bytes = vag.to_vag(filename)[0] if fmt == 'VAG' else vag.to_wav(filename)
+                    (folder_path / f"{filename}.{fmt}").write_bytes(audio_bytes)
 
             dialogue_index = 0
             bgm_index = 0
@@ -214,7 +219,18 @@ class WADFile(Dict[bytes, BaseWADSection], DATFile):
                 else:
                     filename = f"{wad_filename}_dialogue_{dialogue_index}"
                     dialogue_index += 1
-                (folder_path / f"{filename}.WAV").write_bytes(sound.vag.to_wav(filename))
+                audio_bytes = sound.vag.to_vag(filename) if fmt == 'VAG' else sound.vag.to_wav(filename)
+                if fmt == 'VAG' and len(audio_bytes) == VAGSoundData.STEREO:
+                    (folder_path / f"{filename}_L.VAG").write_bytes(audio_bytes[0])
+                    (folder_path / f"{filename}_R.VAG").write_bytes(audio_bytes[1])
+                else:
+                    (folder_path / f"{filename}.{fmt}").write_bytes(audio_bytes[0] if fmt == 'VAG' else audio_bytes)
+
+    def export_audio_to_wav(self, folder_path: Path, wad_filename: str):
+        return self.export_audio(folder_path, wad_filename, 'WAV')
+
+    def export_audio_to_vag(self, folder_path: Path, wad_filename: str):
+        return self.export_audio(folder_path, wad_filename, 'VAG')
 
     def export_level(self, folder_path: Path, wad_filename: str):
         if not folder_path.exists():

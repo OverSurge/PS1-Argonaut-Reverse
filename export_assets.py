@@ -2,8 +2,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from ps1_argonaut.DIR_DAT import DIR_DAT
 from ps1_argonaut.configuration import Configuration, PARSABLE_GAMES, SLICEABLE_GAMES, SUPPORTED_GAMES
+from ps1_argonaut.DIR_DAT import DIR_DAT
 from ps1_argonaut.files.DATFile import DATFile
 from ps1_argonaut.files.IMGFile import IMGFile
 from ps1_argonaut.files.WADFile import WADFile
@@ -29,7 +29,11 @@ def parse_args(_args):
                         metavar="FOLDER_PATH")
     parser.add_argument("-mod", "--export-models", type=str, help="Extracts WAD 3D models to the given folder.",
                         metavar="FOLDER_PATH")
-    parser.add_argument("-aud", "--export-audio", type=str, help="Extracts WAD audio tracks to the given folder.",
+    parser.add_argument("-aud", "--export-audio", type=str,
+                        help="Extracts WAD audio tracks to the given folder (WAV format).",
+                        metavar="FOLDER_PATH")
+    parser.add_argument("--unpack-audio", type=str,
+                        help="Unpack WAD audio tracks to the given folder (PS1 VAG format).",
                         metavar="FOLDER_PATH")
     parser.add_argument("-lvl", "--export-levels", type=str,
                         help="Extracts WAD levels as 3D models to the given folder.",
@@ -64,9 +68,14 @@ def export_assets_from_wad(wad_file: WADFile, args, conf: Configuration):
 
     if conf.game in SPSXSection.supported_games:
         if args.export_audio:
-            wad_audio_folder_path = Path(args.export_audio) / wad_file.stem
-            create_export_directory(wad_audio_folder_path)
-            wad_file.export_audio(wad_audio_folder_path, wad_file.stem)
+            wad_audio_export_folder_path = Path(args.export_audio) / wad_file.stem
+            create_export_directory(wad_audio_export_folder_path)
+            wad_file.export_audio_to_wav(wad_audio_export_folder_path, wad_file.stem)
+
+        if args.unpack_audio:
+            wad_audio_unpack_folder_path = Path(args.unpack_audio) / wad_file.stem
+            create_export_directory(wad_audio_unpack_folder_path)
+            wad_file.export_audio_to_vag(wad_audio_unpack_folder_path, wad_file.stem)
 
     if conf.game in DPSXSection.supported_games:
         if args.export_models:
@@ -105,8 +114,10 @@ def export_assets(args):
     else:  # args.files
         dir_dat = DIR_DAT.from_files(*(Path(file) for file in args.files))
 
-    export_paths = (args.export_images, args.export_textures, args.export_models, args.export_audio, args.export_levels)
-    wads_parsing_needed = any((args.export_textures, args.export_models, args.export_audio, args.export_levels))
+    export_paths = (args.export_images, args.export_textures, args.export_models, args.export_audio, args.unpack_audio,
+                    args.export_levels)
+    wads_parsing_needed = any(
+        (args.export_textures, args.export_models, args.export_audio, args.unpack_audio, args.export_levels))
     [create_export_directory(Path(export_path)) for export_path in export_paths if export_path]
     parse_files()
 

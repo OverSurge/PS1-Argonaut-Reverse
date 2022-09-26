@@ -50,7 +50,7 @@ class VAGSoundData(BaseDataClass):
                 i2 = header_size + i // 2
                 res[i2:i2 + 1024] = self.data[i:i + 1024]
                 res2[i2:i2 + 1024] = self.data[i + 1024:i + 2048]
-            return res, res2
+            return (header + res, header + res2) if with_headers else (res, res2)
 
     def to_wav(self, filename: str):  # TODO Poor performance
         """supports stereo export in a single file, unlike to_vag()."""
