@@ -1,17 +1,21 @@
 from io import BufferedIOBase, SEEK_CUR
-from typing import List
 
 from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, G
 
 
 class PORTSection(BaseWADSection):
-    codename_str = 'TROP'
-    codename_bytes = b'TROP'
+    codename_str = "TROP"
+    codename_bytes = b"TROP"
     supported_games = (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
     section_content_description = "chunk zone ids"
 
-    def __init__(self, idk1: List[bytes], chunks_zones: List[List[int]], fallback_data: bytes = None):
+    def __init__(
+        self,
+        idk1: list[bytes],
+        chunks_zones: list[list[int]],
+        fallback_data: bytes = None,
+    ):
         super().__init__(fallback_data)
         self.idk1 = idk1
         self.chunks_zones = chunks_zones
@@ -32,8 +36,8 @@ class PORTSection(BaseWADSection):
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         fallback_data = cls.fallback_parse_data(data_in)
         size, start = super().parse(data_in, conf)
-        n_zones = int.from_bytes(data_in.read(4), 'little')
-        n_idk1 = int.from_bytes(data_in.read(4), 'little')
+        n_zones = int.from_bytes(data_in.read(4), "little")
+        n_idk1 = int.from_bytes(data_in.read(4), "little")
         idk1 = [data_in.read(32) for _ in range(n_idk1)]
         n_chunks_per_zone = []
         for _ in range(n_zones):
@@ -42,7 +46,9 @@ class PORTSection(BaseWADSection):
             data_in.seek(9, SEEK_CUR)
         chunks_zones = []
         for n_chunks in n_chunks_per_zone:
-            chunks_zones.append([int.from_bytes(data_in.read(2), 'little') for _ in range(n_chunks)])
+            chunks_zones.append(
+                [int.from_bytes(data_in.read(2), "little") for _ in range(n_chunks)]
+            )
 
         cls.check_size(size, start, data_in.tell())
         return cls(idk1, chunks_zones, fallback_data)

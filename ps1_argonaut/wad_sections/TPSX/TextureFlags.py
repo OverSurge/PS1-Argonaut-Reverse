@@ -16,4 +16,10 @@ class TextureFlags(IntFlag):
     @property
     def correction_ratio(self):
         """Correction Ratio, needed for non-4bit/pixel textures to be correctly positioned"""
-        return 4 if self.IS_NOT_PALETTED in self else 2 if self.HAS_256_COLORS_PALETTE in self else 1
+        return (
+            4
+            if self.IS_NOT_PALETTED in self
+            else 2
+            if self.HAS_256_COLORS_PALETTE in self
+            else 1
+        )

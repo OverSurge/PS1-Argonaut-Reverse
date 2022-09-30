@@ -22,7 +22,7 @@ Therefore, this documentation and these tools cannot work with all Argonaut PS1 
 
 ## How to use the Python scripts
 
-> Please use Python >= 3.7
+> Please use Python >= 3.10
 
 > Check that the assets you seek are not already extracted on [PS1-Argonaut-Assets](https://github.com/OverSurge/PS1-Argonaut-Assets) before using assets_export.py.  
 > If they are not, it most probably means that they are not extractable or too experimental for now.

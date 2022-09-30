@@ -9,8 +9,8 @@ from ps1_argonaut.wad_sections.SPSX.SPSXSection import SPSXSection
 
 
 class ENDSection(BaseWADSection):
-    codename_str = ' DNE'
-    codename_bytes = b' DNE'
+    codename_str = " DNE"
+    codename_bytes = b" DNE"
     supported_games = (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
     section_content_description = "sound effects, background music & dialogues"
 
@@ -21,12 +21,14 @@ class ENDSection(BaseWADSection):
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         size, start = super().parse(data_in, conf)
-        spsx_section: SPSXSection = kwargs['spsx_section']
+        spsx_section: SPSXSection = kwargs["spsx_section"]
 
         if size != 0:
             if SPSXFlags.HAS_LEVEL_SFX in spsx_section.spsx_flags:
                 spsx_section.level_sfx_groups.parse_vags(data_in, conf)
-                spsx_section.level_sfx_mapping.parse_mapping(spsx_section.level_sfx_groups)
+                spsx_section.level_sfx_mapping.parse_mapping(
+                    spsx_section.level_sfx_groups
+                )
 
             data_in.seek(2048 * math.ceil(data_in.tell() / 2048))
             spsx_section.dialogues_bgms.parse_vags(data_in, conf)

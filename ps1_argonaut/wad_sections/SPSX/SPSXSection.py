@@ -1,40 +1,67 @@
 import logging
 from io import BufferedIOBase
 from struct import pack
-from typing import Optional
 
 from ps1_argonaut.BaseDataClasses import BaseWADSection
 from ps1_argonaut.configuration import Configuration, G
 from ps1_argonaut.utils import round_up_padding
 from ps1_argonaut.wad_sections.SPSX.LevelSFXMapping import LevelSFXMapping
+from ps1_argonaut.wad_sections.SPSX.SoundContainers import (
+    AmbientContainer,
+    CommonSFXContainer,
+    DialoguesBGMsContainer,
+    LevelSFXContainer,
+    LevelSFXGroupContainer,
+)
+from ps1_argonaut.wad_sections.SPSX.Sounds import (
+    AmbientSound,
+    DialogueBGMSound,
+    EffectSound,
+)
 from ps1_argonaut.wad_sections.SPSX.SPSXFlags import SPSXFlags
-from ps1_argonaut.wad_sections.SPSX.SoundContainers import CommonSFXContainer, AmbientContainer, LevelSFXContainer, \
-    LevelSFXGroupContainer, DialoguesBGMsContainer
-from ps1_argonaut.wad_sections.SPSX.Sounds import EffectSound, AmbientSound, DialogueBGMSound
 
 
 class SPSXSection(BaseWADSection):
-    codename_str = 'XSPS'
-    codename_bytes = b'XSPS'
+    codename_str = "XSPS"
+    codename_bytes = b"XSPS"
     supported_games = (G.HARRY_POTTER_1_PS1, G.HARRY_POTTER_2_PS1)
     section_content_description = "sound effects, background music & dialogues"
 
-    def __init__(self, spsx_flags: SPSXFlags, common_sfx: CommonSFXContainer, ambient_tracks: AmbientContainer,
-                 level_sfx_groups: LevelSFXContainer, level_sfx_mapping: LevelSFXMapping, idk1: int,
-                 idk2: int, dialogues_bgms: DialoguesBGMsContainer):
+    def __init__(
+        self,
+        spsx_flags: SPSXFlags,
+        common_sfx: CommonSFXContainer,
+        ambient_tracks: AmbientContainer,
+        level_sfx_groups: LevelSFXContainer,
+        level_sfx_mapping: LevelSFXMapping,
+        idk1: int,
+        idk2: int,
+        dialogues_bgms: DialoguesBGMsContainer,
+    ):
         super().__init__()
         self.spsx_flags = spsx_flags
         self.common_sfx = common_sfx if common_sfx is not None else CommonSFXContainer()
-        self.ambient_tracks = ambient_tracks if ambient_tracks is not None else AmbientContainer()
-        self.level_sfx_groups = level_sfx_groups if level_sfx_groups is not None else LevelSFXContainer()
+        self.ambient_tracks = (
+            ambient_tracks if ambient_tracks is not None else AmbientContainer()
+        )
+        self.level_sfx_groups = (
+            level_sfx_groups if level_sfx_groups is not None else LevelSFXContainer()
+        )
         self.level_sfx_mapping = level_sfx_mapping
         self.idk1 = idk1
         self.idk2 = idk2
-        self.dialogues_bgms = dialogues_bgms if dialogues_bgms is not None else DialoguesBGMsContainer()
+        self.dialogues_bgms = (
+            dialogues_bgms if dialogues_bgms is not None else DialoguesBGMsContainer()
+        )
 
     @property
     def n_sounds(self):
-        return self.n_common_sfx + self.n_ambient_tracks + self.n_level_sfx + self.n_dialogues_bgms
+        return (
+            self.n_common_sfx
+            + self.n_ambient_tracks
+            + self.n_level_sfx
+            + self.n_dialogues_bgms
+        )
 
     @property
     def n_common_sfx(self):
@@ -72,97 +99,125 @@ class SPSXSection(BaseWADSection):
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         size, start = super().parse(data_in, conf)
 
-        spsx_flags: SPSXFlags = SPSXFlags(int.from_bytes(data_in.read(4), 'little'))
+        spsx_flags: SPSXFlags = SPSXFlags(int.from_bytes(data_in.read(4), "little"))
         assert spsx_flags & 0x2 == 0  # Bit 1 is always unset
         # Bit 0 and 4 are identical
-        assert (SPSXFlags.HAS_AMBIENT_TRACKS in spsx_flags) == (SPSXFlags.HAS_AMBIENT_TRACKS_ in spsx_flags)
+        assert (SPSXFlags.HAS_AMBIENT_TRACKS in spsx_flags) == (
+            SPSXFlags.HAS_AMBIENT_TRACKS_ in spsx_flags
+        )
 
         logging.debug(f"Flags: {str(spsx_flags)}")
 
-        n_sfx = int.from_bytes(data_in.read(4), 'little')
+        n_sfx = int.from_bytes(data_in.read(4), "little")
         logging.debug(f"sound effects count: {n_sfx}")
 
-        common_sfx: Optional[CommonSFXContainer] = None
+        common_sfx: CommonSFXContainer | None = None
         if SPSXFlags.HAS_COMMON_SFX_AND_DIALOGUES_BGMS in spsx_flags:
-            common_sfx = CommonSFXContainer(EffectSound.parse(data_in, conf) for _ in range(n_sfx))
+            common_sfx = CommonSFXContainer(
+                EffectSound.parse(data_in, conf) for _ in range(n_sfx)
+            )
 
-        ambient_tracks: Optional[AmbientContainer] = None
+        ambient_tracks: AmbientContainer | None = None
         if SPSXFlags.HAS_AMBIENT_TRACKS in spsx_flags:
-            ambient_tracks_headers_size = int.from_bytes(data_in.read(4), 'little')
+            ambient_tracks_headers_size = int.from_bytes(data_in.read(4), "little")
             assert ambient_tracks_headers_size % 20 == 0
             n_ambient_tracks = ambient_tracks_headers_size // 20
-            ambient_tracks = AmbientContainer(AmbientSound.parse(data_in, conf) for _ in range(n_ambient_tracks))
+            ambient_tracks = AmbientContainer(
+                AmbientSound.parse(data_in, conf) for _ in range(n_ambient_tracks)
+            )
 
         # Level sound effects groups
         idk1 = None
         idk2 = None
-        level_sfx_groups: Optional[LevelSFXContainer] = None
+        level_sfx_groups: LevelSFXContainer | None = None
         level_sfx_mapping = None
         if SPSXFlags.HAS_LEVEL_SFX in spsx_flags:
-            n_level_sfx_groups = int.from_bytes(data_in.read(4), 'little')
+            n_level_sfx_groups = int.from_bytes(data_in.read(4), "little")
             assert n_level_sfx_groups < 16  #
-            idk1 = int.from_bytes(data_in.read(4), 'little')
-            idk2 = int.from_bytes(data_in.read(4), 'little')
-            n_unique_level_sfx = int.from_bytes(data_in.read(4), 'little')
+            idk1 = int.from_bytes(data_in.read(4), "little")
+            idk2 = int.from_bytes(data_in.read(4), "little")
+            n_unique_level_sfx = int.from_bytes(data_in.read(4), "little")
             level_sfx_groups = LevelSFXContainer(
-                LevelSFXGroupContainer.parse(data_in, conf) for _ in range(n_level_sfx_groups))
+                LevelSFXGroupContainer.parse(data_in, conf)
+                for _ in range(n_level_sfx_groups)
+            )
             level_sfx_groups.parse_groups(data_in, conf)
             assert n_unique_level_sfx <= level_sfx_groups.n_sounds
-            level_sfx_mapping = LevelSFXMapping.parse(data_in, conf, n_unique_level_sfx=n_unique_level_sfx)
+            level_sfx_mapping = LevelSFXMapping.parse(
+                data_in, conf, n_unique_level_sfx=n_unique_level_sfx
+            )
 
         # Dialogues & BGMs
-        dialogues_bgms: Optional[DialoguesBGMsContainer] = None
-        n_dialogues_bgms = int.from_bytes(data_in.read(4), 'little')
+        dialogues_bgms: DialoguesBGMsContainer | None = None
+        n_dialogues_bgms = int.from_bytes(data_in.read(4), "little")
         if SPSXFlags.HAS_COMMON_SFX_AND_DIALOGUES_BGMS in spsx_flags:
             # Gap between level sound effects and dialogues/BGMs
-            end_gap = int.from_bytes(data_in.read(4), 'little')
+            end_gap = int.from_bytes(data_in.read(4), "little")
             assert (end_gap != 0) == (SPSXFlags.HAS_LEVEL_SFX in spsx_flags)
             logging.debug(f"END (DNE) gap: {end_gap}")
 
             dialogues_bgms = DialoguesBGMsContainer(
-                DialogueBGMSound.parse(data_in, conf) for _ in range(n_dialogues_bgms))
+                DialogueBGMSound.parse(data_in, conf) for _ in range(n_dialogues_bgms)
+            )
 
             # Common sound effects audio data
-            common_sfx_total_size = int.from_bytes(data_in.read(4), 'little')
+            common_sfx_total_size = int.from_bytes(data_in.read(4), "little")
             assert common_sfx_total_size == common_sfx.size
             common_sfx.parse_vags(data_in, conf)
 
         # Ambient tracks audio data
         if SPSXFlags.HAS_AMBIENT_TRACKS in spsx_flags:
-            ambient_tracks_total_size = int.from_bytes(data_in.read(4), 'little')
+            ambient_tracks_total_size = int.from_bytes(data_in.read(4), "little")
             assert ambient_tracks_total_size == ambient_tracks.size
             ambient_tracks.parse_vags(data_in, conf)
 
         cls.check_size(size, start, data_in.tell())
-        return cls(spsx_flags, common_sfx, ambient_tracks, level_sfx_groups, level_sfx_mapping, idk1, idk2,
-                   dialogues_bgms)
+        return cls(
+            spsx_flags,
+            common_sfx,
+            ambient_tracks,
+            level_sfx_groups,
+            level_sfx_mapping,
+            idk1,
+            idk2,
+            dialogues_bgms,
+        )
 
     def serialize(self, data_out: BufferedIOBase, conf: Configuration, *args, **kwargs):
         start = super().serialize(data_out, conf)
 
-        data_out.write(pack('<II', self.spsx_flags, self.n_common_sfx))
+        data_out.write(pack("<II", self.spsx_flags, self.n_common_sfx))
         if SPSXFlags.HAS_COMMON_SFX_AND_DIALOGUES_BGMS in self.spsx_flags:
             self.common_sfx.serialize(data_out, conf)
         if SPSXFlags.HAS_AMBIENT_TRACKS in self.spsx_flags:
-            data_out.write((20 * self.n_ambient_tracks).to_bytes(4, 'little'))
+            data_out.write((20 * self.n_ambient_tracks).to_bytes(4, "little"))
             self.ambient_tracks.serialize(data_out, conf)
         if SPSXFlags.HAS_LEVEL_SFX in self.spsx_flags:
             data_out.write(
-                pack('<4I', self.n_level_sfx_groups, self.idk1, self.idk2, self.level_sfx_mapping.n_unique_level_sfx))
+                pack(
+                    "<4I",
+                    self.n_level_sfx_groups,
+                    self.idk1,
+                    self.idk2,
+                    self.level_sfx_mapping.n_unique_level_sfx,
+                )
+            )
             self.level_sfx_groups.serialize(data_out, conf)
             for group in self.level_sfx_groups:
                 group.serialize_children(data_out, conf)
-            self.level_sfx_mapping.serialize(data_out, conf, level_sfx_groups=self.level_sfx_groups)
+            self.level_sfx_mapping.serialize(
+                data_out, conf, level_sfx_groups=self.level_sfx_groups
+            )
 
-        data_out.write(self.n_dialogues_bgms.to_bytes(4, 'little'))
+        data_out.write(self.n_dialogues_bgms.to_bytes(4, "little"))
         if SPSXFlags.HAS_COMMON_SFX_AND_DIALOGUES_BGMS in self.spsx_flags:
-            data_out.write(self.end_gap.to_bytes(4, 'little'))
+            data_out.write(self.end_gap.to_bytes(4, "little"))
             self.dialogues_bgms.serialize(data_out, conf)
-            data_out.write(self.common_sfx_size.to_bytes(4, 'little'))
+            data_out.write(self.common_sfx_size.to_bytes(4, "little"))
             for vag in self.common_sfx.vags:
                 data_out.write(vag.data)
         if SPSXFlags.HAS_AMBIENT_TRACKS in self.spsx_flags:
-            data_out.write(self.ambient_tracks_size.to_bytes(4, 'little'))
+            data_out.write(self.ambient_tracks_size.to_bytes(4, "little"))
             for vag in self.ambient_tracks.vags:
                 data_out.write(vag.data)
 

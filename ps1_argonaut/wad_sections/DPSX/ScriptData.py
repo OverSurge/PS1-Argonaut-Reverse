@@ -15,5 +15,5 @@ class ScriptData(BaseDataClass):
     @classmethod
     def parse(cls, data_in: BufferedIOBase, conf: Configuration, *args, **kwargs):
         super().parse(data_in, conf)
-        size = 4 * int.from_bytes(data_in.read(4), 'little')
+        size = 4 * int.from_bytes(data_in.read(4), "little")
         return cls(data_in.read(size))

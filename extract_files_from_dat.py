@@ -1,15 +1,19 @@
 import argparse
 from pathlib import Path
 
+from ps1_argonaut.configuration import Configuration, SLICEABLE_GAMES, SUPPORTED_GAMES
 from ps1_argonaut.DIR_DAT import DIR_DAT
-from ps1_argonaut.configuration import SLICEABLE_GAMES, SUPPORTED_GAMES, Configuration
 
 parser = argparse.ArgumentParser(
-    description="Utility to extract WAD files from PS1 Argonaut games like Croc 2 or Harry Potter. By OverSurge.")
-parser.add_argument("game", type=str, choices=[game.title for game in SLICEABLE_GAMES],
-                    help="The game the files are from. If it is not listed, choose one you think is the closest.")
-parser.add_argument("dirdat", type=str,
-                    help="Where the DIR/DAT files are located.")
+    description="Utility to extract WAD files from PS1 Argonaut games like Croc 2 or Harry Potter. By OverSurge."
+)
+parser.add_argument(
+    "game",
+    type=str,
+    choices=[game.title for game in SLICEABLE_GAMES],
+    help="The game the files are from. If it is not listed, choose one you think is the closest.",
+)
+parser.add_argument("dirdat", type=str, help="Where the DIR/DAT files are located.")
 parser.add_argument("output_dir", type=str, help="Where to extract the WADs.")
 args = parser.parse_args()
 args.game = next((game for game in SUPPORTED_GAMES if game.title == args.game), None)
