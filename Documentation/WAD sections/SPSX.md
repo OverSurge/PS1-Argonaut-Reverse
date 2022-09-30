@@ -188,7 +188,7 @@ Values are either FF when empty or a level sound effect index (inside its group,
 
 There are always 16 columns, the first one being empty. We can then assume that there can be at most 15 level sound effect groups in one level.
 
-##### Example:
+##### Example
 
 | Empty | 0th channel | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | ...  | 14th channel |
 | :---- | ----------- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ------------ |
@@ -210,4 +210,3 @@ The 0th level sound effect of the 1st group is unique to this level.
 
 <sup>1</sup> : Here's my hypothesis : as 44100 Hz is the base CD sampling rate, they probably wanted to store it as 0x1000 (4096), a symbolic value.  
 <sup>2</sup> : Same as before, but 0x1000 (4096) equals 48000 Hz.
-

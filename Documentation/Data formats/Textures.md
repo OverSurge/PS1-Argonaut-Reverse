@@ -24,7 +24,7 @@ A positive run means "copy as is the 2 × n-th next bytes", a negative run means
 
 ### Legacy textures
 
-Some texture files contain legacy textures from Croc games (I've only seen these in T1L1M001 WADs of several games).   
+Some texture files contain legacy textures from Croc games (I've only seen these in T1L1M001 WADs of several games).
 This is the case when the 3rd bit of the [TPSX flags](../WAD%20sections/TPSX.md#TPSX-flags-structure) is set.
 Legacy textures are composed of 5 uncompressed textures (256-colors paletted) of 0xC00 long each (64 pixels wide).
 
@@ -88,7 +88,7 @@ Textures that use 16-color palettes take 4 bits per pixel.
 |:-----------|:----------------------|:-----------------------------------------------------|:-------------------------------------------------------------------------------------------------------|
 | 0x0        | 0x4                   | Textures count                                       | Abbreviated to '**tc**'                                                                                |
 | 0x4        | 0x4                   | Texture file rows count                              | Each row is 256-pixel large (4 rows / 1024 px max)                                                     |
-| 0x8        | 0xC × '** tc**'       | [Texture descriptors](#Texture-descriptor-structure) | In Harry Potter, the 16 last texture descriptors are blank                                             |
+| 0x8        | 0xC × '**tc**'       | [Texture descriptors](#Texture-descriptor-structure) | In Harry Potter, the 16 last texture descriptors are blank                                             |
 | +0x0       | 0x4                   | **UNKNOWN**                                          | Unknown count, can be 0. Abbreviated to '**uc**'                                                       |
 | +0x4       | 0x4                   | Effects count                                        | TODO Named like that in the game's code                                                                |
 | +0x8       | 0x4 × **uc**          | **UNKNOWN**                                          | Can be nonexistent if **uc** == 0                                                                      |
@@ -160,4 +160,3 @@ This table represents the link between row & column bits and the associated text
 |                                                     |                                                     | 0th<br>bit |  <pre>0      1      0      1</pre>  |
 |                       2nd bit                       |                       4th bit                       |            |                                     |
 | <pre>0<br><br><br>0<br><br><br>1<br><br><br>1</pre> | <pre>0<br><br><br>1<br><br><br>0<br><br><br>1</pre> |            | ![Texture grid](Texture%20grid.png) |
-

@@ -1,6 +1,6 @@
 # PS1 Argonaut Games Reverse Engineering *
 
-### Unofficial documentation of PS1 Argonaut games formats & Python extraction scripts.
+### Unofficial documentation of PS1 Argonaut games formats & Python extraction scripts
 
 > Extracted assets: [PS1-Argonaut-Assets](https://github.com/OverSurge/PS1-Argonaut-Assets).
 
@@ -50,9 +50,9 @@ Therefore, this documentation and these tools cannot work with all Argonaut PS1 
 You can currently contact me on several Discord guilds (XeNTaX, TCRF, HP Modding, HP Console Speedruns, hpgames.net,
 Croc & Stuff, PSXDEV Network & more).
 
-#### Huge thanks to my friends Dobbyatemysock and supluk for supporting me and sharing their ideas.
+#### Huge thanks to my friends Dobbyatemysock and supluk for supporting me and sharing their ideas
 
-#### Thanks to MasterLeoBlue for advising me to use my scripts on Croc 2: it was a good idea !
+#### Thanks to MasterLeoBlue for advising me to use my scripts on Croc 2: it was a good idea
 
 ## Notes
 

@@ -113,7 +113,6 @@ On your hex editor, the bits are in this order:
 | 13    | 50% transparency | If this bit is set, the face is 50% transparent, else completely opaque |
 | 14-15 | **UNKNOWN**      |                                                              |
 
-
 ## Groups explanation
 
 #### Vertex groups

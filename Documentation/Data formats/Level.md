@@ -10,7 +10,6 @@ The level format can be separated in 5 parts :
 
 ## Levels format's concepts
 
-
 ### General concept
 
 The 3D world is divided into chunks (like in Minecraft for example). Most of them are empty. Each filled chunk can
@@ -204,4 +203,3 @@ Unlike regular 3D models, chunk 3D models headers and data are separated: all he
 | 0x1        | 0x1      | Green component |
 | 0x2        | 0x1      | Blue component  |
 | 0x3        | 0x1      | **UNKNOWN**     |
-

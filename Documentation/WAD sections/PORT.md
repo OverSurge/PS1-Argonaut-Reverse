@@ -30,4 +30,3 @@ Linked to [Level's zone ids](../Data%20formats/Level.md), which are the contrary
 | Offset (h) | Size (h)                    | Usage     | Notes                                      |
 | :--------- | :-------------------------- | :-------- | :----------------------------------------- |
 | 0x0        | 0x2 × (**cc** of this zone) | Chunk ids | One id per chunk that belongs to this zone |
-

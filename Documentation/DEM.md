@@ -12,4 +12,3 @@ It *could* be linked to Argonaut Strategy Language (ASL).
 | :--------- | :------------ | :---------------- | :----------------------------------------------------------- |
 | 0x0        | 0x4           | Demo frames count | I don't what those frames mean yet. Abbreviated to '**dfc**' |
 | 0x4        | 0x8 × **dfc** | Demo frames       | Not reversed yet                                             |
-

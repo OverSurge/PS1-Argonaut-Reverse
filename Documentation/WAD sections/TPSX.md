@@ -41,7 +41,6 @@ The TPSX section holds texture data. As it is the first section of every WAD, it
   | +0x0       | 0x4      | Maybe a "unique textures" count | Can be calculated: **tc** - 0x2C (44). Copied in [DPSX](DPSX.md) @0x12 |
   | +0x4       | 0x800    | Demo mode data                  | See [Demo mode](../WAD.md#Demo-mode)                         |
 
-
 #### TPSX flags structure
 
 On your hex editor, the bits are in this order:  
@@ -55,4 +54,3 @@ On your hex editor, the bits are in this order:
 | 3    | Presence of legacy textures | If set, 5 textures (0xC00 long each, 0x3C00 in total) appear between the texture descriptors and the raw texture data |
 | 4    | Multiple titles             | If set, multiple titles are defined (usually one per language). The first unsigned long is then the number of titles, followed by 0x30-long titles. |
 | 5-31 | **UNKNOWN** / ∅ Empty       |                                                              |
-

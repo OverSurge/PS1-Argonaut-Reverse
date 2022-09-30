@@ -27,5 +27,4 @@ Even if VAG only supports mono officially, some tracks are stereo (1024-bytes in
 | +0x0       | **DEPENDS** | 2048-bytes alignment       |                                                              |
 | ++0x0      | **DEPENDS** | Dialogues & BGM audio data | This is where the [Dialogues & BGM beginning offsets](SPSX.md#Dialogues--BGMs-descriptors) start from (Alignment not included) |
 
-> In Harry Potter 2 PS1, this section is 2048-bytes aligned at the end. 
-
+> In Harry Potter 2 PS1, this section is 2048-bytes aligned at the end.

@@ -37,4 +37,3 @@ Those data areas aren't reversed yet.
 - [PORT](WAD%20sections/PORT.md): Rendering groups / zones & more (TODO)
 - ['END '](WAD%20sections/END.md): Delimits the end of the file. In Harry Potter, contains background music and
   level-specific sound effects
-

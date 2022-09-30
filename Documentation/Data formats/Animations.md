@@ -75,7 +75,6 @@ Starting with Harry Potter 1 PS1, the base header size increased (from 0x20 to 0
 | ++++0x0    | 0x8 × **ic**                         | **UNKNOWN**         | Interframe header data, unknown purpose                      |
 | +++++0x0   | 0x18 × **vg** × **tf**               | Animation frames    | See [Old animation format](#Old-animation-format) (it was the only one used back then) |
 
-
 ### Old animation format
 
 #### Old format's frame structure
@@ -136,4 +135,3 @@ x │21│22│23│
 | 0xA        | 0x2      | y ┼ Translation vector |                                                              |
 | 0xC        | 0x2      | z ┘                    |                                                              |
 | 0xE        | 0x2      | Frame index            | Starts at 0 and goes up                                      |
-
