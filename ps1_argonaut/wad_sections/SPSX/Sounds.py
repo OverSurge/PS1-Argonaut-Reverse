@@ -8,7 +8,7 @@ from ps1_argonaut.wad_sections.SPSX.VAGSoundData import MONO, STEREO, VAGSoundDa
 
 
 class SoundEffectsAmbientFlags(IntFlag):
-    pass
+    UNKNOWN = 0x1
 
 
 class DialoguesBGMsSoundFlags(IntFlag):
